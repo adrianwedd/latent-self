@@ -9,7 +9,7 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
-        ('weights', 'weights'),
+        ('models', 'models'),
         ('data', 'data'),
     ],
     hiddenimports=[
