@@ -63,8 +63,13 @@ OPTIONAL = {
 MODELS_META = {
     # filename : (url, sha256 or None)
     "ffhq-1024-stylegan2.pkl":
-        ("https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada-pytorch/pretrained/ffhq.pkl",
-         "22151b43e01d6b96d2f772671c5f3cf73b63fed6d2b2661d72f6cf6ca9b39194"),
+        (
+            "https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada-pytorch/pretrained/ffhq.pkl",
+            (
+                "a205a346e86a9ddaae702e118097d014b7b8bd719491396a162cca438f2f524c",
+                "22151b43e01d6b96d2f772671c5f3cf73b63fed6d2b2661d72f6cf6ca9b39194",
+            ),
+        ),
     "e4e_ffhq_encode.pt":
         ("https://huggingface.co/camenduru/PTI/resolve/main/e4e_ffhq_encode.pt",
          "748f4cb01604d2db53f141fa10542d91c44f7b98b713c2b49c375ddfac3f4efd"),
@@ -144,9 +149,16 @@ def ensure_encoder_repo():
 def download_models():
     MODELS.mkdir(exist_ok=True)
     with Progress(SpinnerColumn(), TextColumn("{task.description}"), BarColumn(), TimeRemainingColumn(), console=console) as p:
-        for fname,(url,checksum) in MODELS_META.items():
+        for fname,(url,checksums) in MODELS_META.items():
             dest = MODELS / fname
-            if dest.exists() and (checksum is None or sha256(dest)==checksum):
+            if checksums is None:
+                allowed = None
+            elif isinstance(checksums, (list, tuple, set)):
+                allowed = set(checksums)
+            else:
+                allowed = {checksums}
+
+            if dest.exists() and (allowed is None or sha256(dest) in allowed):
                 console.print(f"[grey58]{fname} already present.")
                 continue
             t = p.add_task(f"Downloading {fname}", total=None)
@@ -154,7 +166,7 @@ def download_models():
                 while chunk := r.read(8192):
                     f.write(chunk)
             p.remove_task(t)
-            if checksum and sha256(dest)!=checksum:
+            if allowed and sha256(dest) not in allowed:
                 dest.unlink()
                 console.print(f"[bold red]Checksum mismatch for {fname} – abort.[/]")
                 sys.exit(1)

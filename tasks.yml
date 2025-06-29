@@ -207,6 +207,16 @@ PHASE_I_HOTFIXES:
     priority: P0
     status: done
 
+  - id: HOTFIX-011
+    title: Refresh StyleGAN2 FFHQ checksum
+    desc: |
+      • In scripts/setup.py > MODELS_META, replace the old hash
+        22151b43e01d…b39194 with the new a205a346e86a9ddaae702e118097d014b7b8bd719491396a162cca438f2f524c.
+      • Allow either hash to pass in case the CDN flips back.
+    tags: [setup]
+    priority: P0
+    status: done
+
 PHASE_J_ENHANCEMENTS:
   # ────────────────────────────────────── Beauty / Symmetry ──────────────────────────────────────
   - id: BEAUTY-001
