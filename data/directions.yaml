@@ -1,8 +1,12 @@
 age:
+  label: Age
   max_magnitude: 3.0
 gender:
+  label: Gender
   max_magnitude: 3.0
 smile:
+  label: Smile
   max_magnitude: 3.0
 species:
+  label: Species
   max_magnitude: 3.0
