@@ -35,7 +35,7 @@ This project requires the following model weights:
 *   `e4e_ffhq_encode.pt` – e4e encoder
 *   `latent_directions.npz` – Latent directions for age, gender, and smile
 
-Place these files in a `weights` directory in the project root.
+Place these files in a `models` directory in the project root.
 
 ## Usage
 
