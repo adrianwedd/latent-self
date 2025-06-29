@@ -206,3 +206,57 @@ PHASE_I_HOTFIXES:
     tags: [bugfix, config]
     priority: P0
     status: done
+
+PHASE_J_ENHANCEMENTS:
+  # ────────────────────────────────────── Beauty / Symmetry ──────────────────────────────────────
+  - id: BEAUTY-001
+    title: Integrate Beauty latent direction
+    desc: |
+      • Download beauty.npy (generators-with-stylegan2 repo) or add your own vector.
+      • Normalise, append to models/latent_directions.npz.
+      • Add entry to data/directions.yaml (max_magnitude: 2.5).
+      • Map hot-key ‘u’ in latent_self.py and update HUD/Admin slider.
+      • Update orthogonality checker.
+    tags: [model, feature]
+    priority: P1
+    status: todo
+
+  - id: BEAUTY-002
+    title: Bootstrap installer to fetch beauty.npy
+    desc: Extend scripts/setup.py MODELS dict to include beauty.npy with checksum and prompt user to install.
+    tags: [installer, setup]
+    priority: P2
+    status: todo
+
+  # ────────────────────────────────────── Facial Expressions ─────────────────────────────────────
+  - id: EMOTION-001
+    title: Add six emotion latent directions
+    desc: |
+      • Acquire emotion_{happy,angry,sad,fear,disgust,surprise}.npy (generators-with-stylegan2).
+      • Append to latent_directions.npz and directions.yaml (max_magnitude: 3.0 each).
+      • Provide hot-keys or Admin dropdown; HUD support.
+    tags: [model, feature]
+    priority: P1
+    status: todo
+
+  - id: EMOTION-002
+    title: UI controls for emotion bank
+    desc: Implement either radio buttons or single-slider cycle in Qt admin panel; fallback keys in cv2 mode.
+    tags: [ui, qt]
+    priority: P2
+    status: todo
+
+  # ────────────────────────────────────── Docs & Tests ───────────────────────────────────────────
+  - id: DOCS-008
+    title: Update README and docs for Beauty & Emotion sliders
+    desc: Document new CLI hot-keys, update directions list, add screenshots.
+    tags: [docs]
+    priority: P2
+    status: todo
+
+  - id: TEST-005
+    title: Unit tests for Beauty and Emotion vectors
+    desc: Extend pytest fixture; assert vectors present, unit-L2, and orthogonality < 0.3 against existing axes.
+    tags: [tests]
+    priority: P1
+    status: todo
