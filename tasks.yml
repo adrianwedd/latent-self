@@ -11,7 +11,7 @@ PHASE_D_POLISH:
     desc: Fade in a translucent idle screen when no face is detected for N seconds. Fade out immediately when a face returns.
     tags: [ux, polish, overlay]
     priority: P3
-    status: done
+    status: todo
 
   - id: POLISH-003
     title: Validate `latent_self.spec` for PyInstaller
@@ -82,7 +82,7 @@ PHASE_E_SPECIES:
     desc: Add `--blend-species` CLI arg and `key == Qt.Key_S` clause to morphing logic, mirroring AGE/GENDER/ETHNICITY support.
     tags: [gan, morphing, ui]
     priority: P3
-    status: done
+    status: todo
 
   - id: SPECIES-003
     title: Add SPECIES slider to admin panel
