@@ -469,7 +469,7 @@ class LatentSelf:
         self.blend_weights = {
             k.upper(): v for k, v in self.config.data['blend_weights'].items()
         }
-        if 'species' not in self.blend_weights: # Ensure species is present even if not in config
+        if 'SPECIES' not in self.blend_weights:  # Ensure species is present even if not in config
             self.blend_weights['SPECIES'] = 0.0
         self.tracker.alpha = self.config.data['tracker_alpha']
         self.max_magnitudes = {
