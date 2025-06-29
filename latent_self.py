@@ -158,9 +158,6 @@ class Config:
         logging.info("Configuration reloaded.")
         if self.app:
             self.app._apply_config()
-        logging.info("Configuration reloaded.")
-        if self.app:
-            self.app._apply_config()
 
     def _override_with_cli(self, args: argparse.Namespace) -> None:
         """Update config with any values explicitly set on the command line."""
@@ -173,6 +170,8 @@ class Config:
             self.data['blend_weights']['gender'] = args.blend_gender
         if args.blend_smile is not None:
             self.data['blend_weights']['smile'] = args.blend_smile
+        if args.blend_species is not None:
+            self.data['blend_weights']['species'] = args.blend_species
         if args.fps is not None:
             self.data['fps'] = args.fps
 
@@ -310,7 +309,11 @@ class _EyeTracker:
 
     def get_eyes(self, frame_bgr: np.ndarray) -> tuple[tuple[int, int], tuple[int, int]] | None:
         """Return (left_ey, right_eye) pixel coords or `None` if no face."""
-        res = self.mesh.process(cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB))
+        try:
+            res = self.mesh.process(cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB))
+        except Exception as e:  # Mediapipe can throw when inputs are unexpected
+            logging.error("Mediapipe processing failed: %s", e)
+            return None
         if not res.multi_face_landmarks:
             return None
         lm = res.multi_face_landmarks[0].landmark
@@ -572,6 +575,9 @@ class LatentSelf:
         """Runs in a background thread, processing and displaying video frames."""
         baseline_latent: torch.Tensor | None = None
         last_encode = 0.0
+        idle_frames = 0
+        idle_threshold = int(self.config.data.get('idle_seconds', 3) * self.config.data['fps'])
+        fade_frames = int(self.config.data.get('idle_fade_frames', self.config.data['fps']))
 
         while not self.stop_event.is_set():
             if not self.camera_available:
@@ -621,8 +627,11 @@ class LatentSelf:
             # Draw tracked eyes for debug
             eyes = self.tracker.left_eye, self.tracker.right_eye
             if eyes[0] is not None and eyes[1] is not None:
+                idle_frames = 0
                 cv2.circle(out_frame, eyes[0], 3, (0,255,0), -1)
                 cv2.circle(out_frame, eyes[1], 3, (0,255,0), -1)
+            else:
+                idle_frames += 1
 
             cv2.putText(
                 out_frame,
@@ -631,6 +640,12 @@ class LatentSelf:
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.7, (255, 255, 255), 2, cv2.LINE_AA
             )
+
+            if idle_frames > idle_threshold:
+                alpha = min(1.0, (idle_frames - idle_threshold) / fade_frames)
+                overlay = out_frame.copy()
+                overlay[:] = (0, 0, 0)
+                cv2.addWeighted(overlay, alpha, out_frame, 1 - alpha, 0, out_frame)
 
             if self.ui == 'qt' and frame_emitter:
                 # Update HUD if it exists
@@ -656,6 +671,8 @@ class LatentSelf:
                     self.active_direction = "GENDER"
                 elif key == ord("h"):
                     self.active_direction = "SMILE"
+                elif key == ord("s"):
+                    self.active_direction = "SPECIES"
                 elif key == ord("b"):
                     self.active_direction = "BLEND"
 
@@ -741,6 +758,7 @@ def main(argv: list[str] | None = None) -> None:
     g.add_argument("--blend-age", type=float, default=None, help="Weight for age in blended mode")
     g.add_argument("--blend-gender", type=float, default=None, help="Weight for gender in blended mode")
     g.add_argument("--blend-smile", type=float, default=None, help="Weight for smile in blended mode")
+    g.add_argument("--blend-species", type=float, default=None, help="Weight for species in blended mode")
 
     args = parser.parse_args(argv)
 

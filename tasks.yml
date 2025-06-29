@@ -198,11 +198,11 @@ PHASE_I_HOTFIXES:
     desc: Wrap Mediapipe face_mesh processing in try/except loop; disable tracker gracefully after consecutive failures.
     tags: [bugfix, robustness]
     priority: P0
-    status: todo
+    status: done
 
   - id: HOTFIX-004
     title: Remove duplicate _apply_config() call
     desc: Eliminate the repeated call inside Config.reload to avoid redundant work and potential double logging.
     tags: [bugfix, config]
     priority: P0
-    status: todo
+    status: done
