@@ -97,7 +97,7 @@ PHASE_F_DOCS_AGENTS:
     desc: Generate a top-level README with project overview, install steps, quick-start, feature list, badges, and a small demo GIF placeholder.
     tags: [docs, readme]
     priority: P1
-    status: todo
+    status: done
 
   - id: DOCS-002
     title: Build MkDocs site skeleton
@@ -184,7 +184,7 @@ PHASE_I_HOTFIXES:
     desc: Remove global duplicate VideoWorker class or wrap it in `if QT_AVAILABLE:` to eliminate NameError when Qt is absent.
     tags: [bugfix, qt, threading]
     priority: P0
-    status: todo
+    status: done
 
   - id: HOTFIX-002
     title: Single source of truth for direction sliders
@@ -198,11 +198,11 @@ PHASE_I_HOTFIXES:
     desc: Wrap Mediapipe face_mesh processing in try/except loop; disable tracker gracefully after consecutive failures.
     tags: [bugfix, robustness]
     priority: P0
-    status: todo
+    status: done
 
   - id: HOTFIX-004
     title: Remove duplicate _apply_config() call
     desc: Eliminate the repeated call inside Config.reload to avoid redundant work and potential double logging.
     tags: [bugfix, config]
     priority: P0
-    status: todo
+    status: done
