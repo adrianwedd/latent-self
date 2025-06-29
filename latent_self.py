@@ -22,8 +22,9 @@ Place them under a directory specified by --weights (default: ./models).
 
 Usage:
     python latent_self.py --camera 0 --resolution 512 --cuda
-    python latent_self.py --ui qt --kiosk
-
+    python latent_self.py --ui qt          # windowed
+    python latent_self.py --ui qt --kiosk  # fullscreen kiosk
+    
 Interactive Controls:
     q       : Quit gracefully
     a       : Morph along the 'Age' axis
@@ -372,6 +373,7 @@ class LatentSelf:
         device: str,
         weights_dir: Path,
         ui: str,
+        kiosk: bool,
     ) -> None:
         """Initializes the LatentSelf class.
 
@@ -382,6 +384,7 @@ class LatentSelf:
             device: The device to use for processing (CPU or CUDA).
             weights_dir: The directory where the model weights are stored.
             ui: The UI backend to use (cv2 or qt).
+            kiosk: Whether to hide the cursor and enforce fullscreen (Qt only).
         """
         self.config = config
         self.camera_index = camera_index
@@ -397,6 +400,7 @@ class LatentSelf:
         self.device = torch.device(device)
         self.weights_dir = weights_dir
         self.ui = ui
+        self.kiosk = kiosk
         self.REENCODE_INTERVAL_S = 10.0 # Add this line
         self.active_direction = "BLEND"
 
@@ -717,7 +721,10 @@ class LatentSelf:
         self._processing_thread.new_frame.connect(self.window.update_frame)
         self._processing_thread.start()
 
-        self.window.show_fullscreen()
+        if self.kiosk:
+            self.window.show_fullscreen()
+        else:
+            self.window.show()
         app.exec()
 
         self.stop_event.set()
@@ -752,6 +759,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--cuda", action="store_true", help="Use CUDA if available")
     parser.add_argument("--weights", type=Path, default=asset_path("models"), help="Directory for model weights")
     parser.add_argument("--ui", type=str, default="cv2", choices=["cv2", "qt"], help="UI backend to use")
+    parser.add_argument("--kiosk", action="store_true", help="Hide cursor and launch fullscreen (Qt only)")
 
     g = parser.add_argument_group("Morphing Controls (overrides config)")
     g.add_argument("--cycle-duration", type=float, default=None, help="Duration of one morph cycle (seconds)")
@@ -777,6 +785,7 @@ def main(argv: list[str] | None = None) -> None:
         device=device,
         weights_dir=args.weights,
         ui=args.ui,
+        kiosk=args.kiosk,
     )
     config.app = app
     app.run()
