@@ -265,12 +265,12 @@ PHASE_K_AUDIT:
   - id: AUDIT-001
     title: Reorganise imports & fallback handling
     desc: |
-      • Remove unused imports (shutil, socket, duplicate logging).  
-      • Promote all critical imports to top of file or wrap in lazy-loader with explicit error message (pSp, mediapipe).  
+      • Remove unused imports (shutil, socket, duplicate logging).
+      • Promote all critical imports to top of file or wrap in lazy-loader with explicit error message (pSp, mediapipe).
       • Add try/except ImportError guard for optional extras.
     tags: [bugfix, imports]
     priority: P0
-    status: todo
+    status: done
 
   - id: AUDIT-002
     title: Thread-safety for shared state

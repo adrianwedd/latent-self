@@ -38,20 +38,26 @@ from __future__ import annotations
 
 import argparse
 import logging
-import shutil
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from threading import Event, Thread
 from time import time
 from typing import Any, Dict
-from dataclasses import dataclass
+import platform
+
 import appdirs
 import cv2
-import mediapipe as mp
 import numpy as np
 import torch
 import yaml
-import socket
+
+try:
+    import mediapipe as mp
+except ImportError as exc:  # pragma: no cover - runtime fail hard
+    raise RuntimeError(
+        "mediapipe is required for face tracking. Install it with 'pip install mediapipe'."
+    ) from exc
 
 @dataclass
 class DirectionUI:
@@ -139,7 +145,7 @@ class Config:
         if not self.config_path.exists():
             self.config_dir.mkdir(parents=True, exist_ok=True)
             default_config = asset_path("data/config.yaml")
-            shutil.copy(default_config, self.config_path)
+            self.config_path.write_bytes(default_config.read_bytes())
             logging.info(f"Created default config at {self.config_path}")
 
     def _ensure_directions_exists(self) -> None:
@@ -147,7 +153,7 @@ class Config:
         if not self.directions_path.exists():
             self.config_dir.mkdir(parents=True, exist_ok=True)
             default_directions = asset_path("data/directions.yaml")
-            shutil.copy(default_directions, self.directions_path)
+            self.directions_path.write_bytes(default_directions.read_bytes())
             logging.info(f"Created default directions at {self.directions_path}")
 
     def reload(self) -> None:
@@ -430,7 +436,7 @@ class LatentSelf:
         broker = self.config.data['mqtt']['broker']
         port = self.config.data['mqtt']['port']
         topic_namespace = self.config.data['mqtt']['topic_namespace']
-        device_id = self.config.data['mqtt'].get('device_id') or socket.gethostname()
+        device_id = self.config.data['mqtt'].get('device_id') or platform.node()
 
         self.mqtt_client = mqtt.Client(client_id=device_id)
         self.mqtt_client.on_connect = self._on_mqtt_connect
