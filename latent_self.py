@@ -18,7 +18,7 @@ Model weights required (download separately):
     * e4e_ffhq_encode.pt           – e4e encoder
     * latent_directions.npz        – numpy file with unit vectors for AGE, GENDER, ETHNICITY
 
-Place them under a directory specified by --weights (default: ./weights).
+Place them under a directory specified by --weights (default: ./models).
 
 Usage:
     python latent_self.py --camera 0 --resolution 512 --cuda
@@ -750,7 +750,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--resolution", type=int, default=512, help="Square frame size (px)")
     parser.add_argument("--fps", type=int, default=None, help="Target frames per second (overrides config)")
     parser.add_argument("--cuda", action="store_true", help="Use CUDA if available")
-    parser.add_argument("--weights", type=Path, default=asset_path("weights"), help="Directory for model weights")
+    parser.add_argument("--weights", type=Path, default=asset_path("models"), help="Directory for model weights")
     parser.add_argument("--ui", type=str, default="cv2", choices=["cv2", "qt"], help="UI backend to use")
 
     g = parser.add_argument_group("Morphing Controls (overrides config)")
