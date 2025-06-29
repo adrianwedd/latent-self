@@ -11,7 +11,7 @@ Latent Self is an interactive art installation that uses a webcam to capture a u
 *   Real-time face morphing
 *   Multiple transformation axes (age, gender, smile, species)
 *   Adjustable blend weights for each axis
-*   Fullscreen kiosk mode
+*   Fullscreen kiosk mode (`--kiosk`)
 *   Admin panel for on-site configuration
 *   MQTT heartbeat for remote monitoring
 
@@ -41,6 +41,7 @@ Place these files in a `models` directory in the project root.
 
 ```bash
 python latent_self.py
+python latent_self.py --ui qt --kiosk  # Qt fullscreen
 ```
 
 ## Demo
