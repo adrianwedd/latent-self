@@ -479,6 +479,10 @@ class LatentSelf:
         self.max_magnitudes = {
             k.upper(): v['max_magnitude'] for k, v in self.config.directions_data.items()
         }
+        self.direction_labels = {
+            k.upper(): v.get('label', k.capitalize()) for k, v in self.config.directions_data.items()
+        }
+        self._hud_values = {k: None for k in self.direction_labels}
 
     # ------------------------------------------------------------------
     # Latent utilities
@@ -659,7 +663,10 @@ class LatentSelf:
                             value = current_magnitude
                         else:
                             value = 0.0
-                        ui_elements.label.setText(f"{name}: {value:+.1f}")
+                        if self._hud_values.get(name.upper()) != value:
+                            self._hud_values[name.upper()] = value
+                            label = self.direction_labels.get(name.upper(), name.capitalize())
+                            ui_elements.label.setText(f"{label}: {value:+.1f}")
 
                 frame_emitter.emit(_numpy_to_qimage(out_frame))
                 QThread.msleep(int(1000 / self.config.data['fps']))

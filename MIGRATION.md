@@ -6,7 +6,8 @@ This document explains the changes made to the latent-self project.
 
 The latent directions have been updated to use the InterFaceGAN vectors for age, gender, and smile. The new vectors are stored in `latent_directions.npz`.
 
-The `directions.yaml` file contains the default `max_magnitude` for each vector.
+The `directions.yaml` file contains metadata for each direction, including a
+human‑friendly `label` and the default `max_magnitude`.
 
 ## Hot-keys
 

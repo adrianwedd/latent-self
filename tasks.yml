@@ -191,7 +191,7 @@ PHASE_I_HOTFIXES:
     desc: Move per‑direction max_magnitude and labels into directions.yaml; HUD reads once instead of updating every frame.
     tags: [refactor, config, ui]
     priority: P0
-    status: todo
+    status: done
 
   - id: HOTFIX-003
     title: Catch Mediapipe runtime exceptions
