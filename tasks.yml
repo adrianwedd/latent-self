@@ -260,3 +260,133 @@ PHASE_J_ENHANCEMENTS:
     tags: [tests]
     priority: P1
     status: todo
+PHASE_K_AUDIT:
+  # ──────────────── Critical bug-fixes ──────────────────────────────────────────
+  - id: AUDIT-001
+    title: Reorganise imports & fallback handling
+    desc: |
+      • Remove unused imports (shutil, socket, duplicate logging).  
+      • Promote all critical imports to top of file or wrap in lazy-loader with explicit error message (pSp, mediapipe).  
+      • Add try/except ImportError guard for optional extras.
+    tags: [bugfix, imports]
+    priority: P0
+    status: todo
+
+  - id: AUDIT-002
+    title: Thread-safety for shared state
+    desc: |
+      • Protect self.active_direction, tracker objects with threading.Lock or Qt signal/slot.  
+      • Replace direct shared-state mutation with queue/signal.  
+      • Verify camera open/close is called only from one thread.
+    tags: [bugfix, threading]
+    priority: P0
+    status: todo
+
+  - id: AUDIT-003
+    title: Robust error & resource management
+    desc: |
+      • Wrap camera retry logic with exponential back-off.  
+      • Convert model loading to try/except and raise user-friendly dialog.  
+      • Add finally blocks to release camera, MQTT, Qt threads on exception.  
+      • Publish MQTT failures as warning not fatal.
+    tags: [bugfix, robustness]
+    priority: P0
+    status: todo
+
+  # ──────────────── Architectural refactors ─────────────────────────────────────
+  - id: AUDIT-004
+    title: Split LatentSelf into service classes
+    desc: Extract VideoProcessor, ModelManager, ConfigManager, TelemetryClient; wire through dependency-injection for easier tests.
+    tags: [refactor, architecture]
+    priority: P1
+    status: todo
+
+  - id: AUDIT-005
+    title: Formal configuration schema & validation
+    desc: |
+      • Define JSONSchema/YAML schema for config.yaml and directions.yaml.  
+      • Validate on load; emit human-readable errors.  
+      • CLI overrides merged via pydantic BaseSettings (or similar).
+    tags: [enhancement, config]
+    priority: P1
+    status: todo
+
+  - id: AUDIT-006
+    title: Centralised latent-direction registry
+    desc: Implement Direction enum/registry; ensure case-insensitive lookup, presence validation, and single source of hot-key <-> direction mapping.
+    tags: [enhancement, model]
+    priority: P2
+    status: todo
+
+  # ──────────────── Performance & memory ───────────────────────────────────────
+  - id: AUDIT-007
+    title: Optimise model & tensor memory usage
+    desc: Unload models when not used, reuse tensor buffers, add memory monitor & config limits.
+    tags: [performance]
+    priority: P2
+    status: todo
+
+  - id: AUDIT-008
+    title: Adaptive frame-rate & frame-dropping
+    desc: |
+      • Measure encode FPS; if below target, drop frames or lower resolution.  
+      • Add --low_power preset.
+    tags: [performance, video]
+    priority: P2
+    status: todo
+
+  # ──────────────── Code-quality & logging ─────────────────────────────────────
+  - id: AUDIT-009
+    title: Full type-hint coverage + mypy gate
+    desc: Add/verify type annotations, generics, Optionals; integrate mypy into CI (fails on errors).
+    tags: [quality, typing]
+    priority: P3
+    status: todo
+
+  - id: AUDIT-010
+    title: Structured logging overhaul
+    desc: |
+      • Introduce JSON log formatter in kiosk mode.  
+      • Standardise log levels; separate debug vs user info; add timing metrics.
+    tags: [quality, logging]
+    priority: P3
+    status: todo
+
+  # ──────────────── Validation & security ──────────────────────────────────────
+  - id: AUDIT-011
+    title: Input & CLI argument validation
+    desc: Range-check numeric params, sanitize paths, validate camera indices.
+    tags: [security, validation]
+    priority: P1
+    status: todo
+
+  - id: AUDIT-012
+    title: Secure MQTT (TLS & auth)
+    desc: |
+      • Add username/password or cert auth; support mqtts://;  
+      • Securely store creds; validate incoming messages.
+    tags: [security, network]
+    priority: P2
+    status: todo
+
+  # ──────────────── Tests, docs, CI ────────────────────────────────────────────
+  - id: AUDIT-013
+    title: Extend pytest coverage to 70 %
+    desc: Add unit tests with camera/model mocks, integration test for encode→decode pipeline, config validation tests.
+    tags: [tests]
+    priority: P2
+    status: todo
+
+  - id: AUDIT-014
+    title: YAML schema validation test
+    desc: Validate sample config files against new schema inside CI; fail build on violation.
+    tags: [tests, config]
+    priority: P1
+    status: todo
+
+  - id: AUDIT-015
+    title: Docstrings & architecture docs
+    desc: Fill missing docstrings, add architecture diagram (PlantUML) to docs site.
+    tags: [docs]
+    priority: P3
+    status: todo
