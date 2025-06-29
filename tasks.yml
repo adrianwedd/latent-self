@@ -75,14 +75,14 @@ PHASE_E_SPECIES:
     desc: Curate training data, run the direction learning notebook, normalize the result, and merge into the existing `.npz`.
     tags: [gan, latent-space, morphing]
     priority: P2
-    status: todo
+    status: done
 
   - id: SPECIES-002
     title: Integrate SPECIES direction into latent offset code
     desc: Add `--blend-species` CLI arg and `key == Qt.Key_S` clause to morphing logic, mirroring AGE/GENDER/ETHNICITY support.
     tags: [gan, morphing, ui]
     priority: P3
-    status: todo
+    status: done
 
   - id: SPECIES-003
     title: Add SPECIES slider to admin panel
