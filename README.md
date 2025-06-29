@@ -31,9 +31,9 @@ Latent Self is an interactive art installation that uses a webcam to capture a u
 
 This project requires the following model weights:
 
-*   `ffhq-1024-stylegan2.pkl` – StyleGAN2-ADA generator
-*   `e4e_ffhq_encode.pt` – e4e encoder
-*   `latent_directions.npz` – Latent directions for age, gender, and smile
+* [`ffhq-1024-stylegan2.pkl`](https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada-pytorch/pretrained/ffhq.pkl) – StyleGAN‑ADA generator  
+* [`e4e_ffhq_encode.pt`](https://huggingface.co/camenduru/PTI/resolve/main/e4e_ffhq_encode.pt) – e4e encoder  
+* [`latent_directions.npz`](https://raw.githubusercontent.com/genforce/interfacegan/master/boundaries/latent_directions_ffhq.npz) – W⁺ latent directions (age, gender, smile)
 
 Place these files in a `models` directory in the project root.
 
