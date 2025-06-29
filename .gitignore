@@ -21,3 +21,7 @@ dist/
 
 # macOS metadata
 .DS_Store
+
+# Models
+.pt
+.pkl
