@@ -301,7 +301,7 @@ PHASE_K_AUDIT:
       • Publish MQTT failures as warning not fatal.
     tags: [bugfix, robustness]
     priority: P0
-    status: todo
+    status: done
 
   # ──────────────── Architectural refactors ─────────────────────────────────────
   - id: AUDIT-004

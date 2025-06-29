@@ -412,10 +412,19 @@ class LatentSelf:
 
 
         # Pre-load models (lazy wrapper ensures each loads once)
-        self.G = get_stylegan_generator(weights_dir).to(self.device)
-        self.E = get_e4e_encoder(weights_dir).to(self.device)
-        self.latent_dirs = get_latent_directions(weights_dir)
-        self.check_orthogonality()
+        try:
+            self.G = get_stylegan_generator(weights_dir).to(self.device)
+            self.E = get_e4e_encoder(weights_dir).to(self.device)
+            self.latent_dirs = get_latent_directions(weights_dir)
+            self.check_orthogonality()
+        except Exception as e:  # noqa: W0703 - display to user then re-raise
+            msg = f"Model loading failed: {e}"
+            logging.error(msg)
+            if QT_AVAILABLE and self.ui == 'qt':
+                from PyQt6.QtWidgets import QMessageBox
+
+                QMessageBox.critical(None, "Latent Self Error", msg)
+            raise
 
         self.stop_event = Event()
         self._processing_thread: Thread | VideoWorker | None = None
@@ -447,7 +456,9 @@ class LatentSelf:
             self.mqtt_client.loop_start()  # Start a non-blocking loop
             logging.info(f"MQTT: Connected to {broker}:{port}")
         except Exception as e:
-            logging.error(f"MQTT: Could not connect to broker {broker}:{port} - {e}")
+            logging.warning(
+                f"MQTT: Could not connect to broker {broker}:{port} - {e}"
+            )
             self.mqtt_client = None
 
         self.mqtt_topic = f"{topic_namespace}/{device_id}/heartbeat"
@@ -471,7 +482,7 @@ class LatentSelf:
                 self._last_mqtt_heartbeat = time()
                 logging.debug(f"MQTT: Sent heartbeat to {self.mqtt_topic}")
             except Exception as e:
-                logging.error(f"MQTT: Failed to send heartbeat - {e}")
+                logging.warning(f"MQTT: Failed to send heartbeat - {e}")
 
     def _apply_config(self) -> None:
         """Apply configuration settings to the application's attributes."""
@@ -592,112 +603,115 @@ class LatentSelf:
         idle_frames = 0
         idle_threshold = int(self.config.data.get('idle_seconds', 3) * self.config.data['fps'])
         fade_frames = int(self.config.data.get('idle_fade_frames', self.config.data['fps']))
+        retry_delay = 1.0
+        max_delay = 30.0
 
-        while not self.stop_event.is_set():
-            if not self.camera_available:
-                logging.error("Camera not available. Displaying error screen and retrying...")
-                # Display a black screen with an error message
-                h, w = self.resolution, self.resolution # Assuming square resolution
-                error_frame = np.zeros((h, w, 3), dtype=np.uint8)
-                error_text = "Camera Not Available"
-                font = cv2.FONT_HERSHEY_SIMPLEX
-                text_size = cv2.getTextSize(error_text, font, 1, 2)[0]
-                text_x = (w - text_size[0]) // 2
-                text_y = (h + text_size[1]) // 2
-                cv2.putText(error_frame, error_text, (text_x, text_y), font, 1, (0, 0, 255), 2, cv2.LINE_AA)
+        try:
+            while not self.stop_event.is_set():
+                if not self.camera_available:
+                    logging.error(
+                        "Camera not available. Displaying error screen and retrying..."
+                    )
+                    h, w = self.resolution, self.resolution
+                    error_frame = np.zeros((h, w, 3), dtype=np.uint8)
+                    error_text = "Camera Not Available"
+                    font = cv2.FONT_HERSHEY_SIMPLEX
+                    text_size = cv2.getTextSize(error_text, font, 1, 2)[0]
+                    text_x = (w - text_size[0]) // 2
+                    text_y = (h + text_size[1]) // 2
+                    cv2.putText(error_frame, error_text, (text_x, text_y), font, 1, (0, 0, 255), 2, cv2.LINE_AA)
+
+                    if self.ui == 'qt' and frame_emitter:
+                        frame_emitter.emit(_numpy_to_qimage(error_frame))
+                    else:
+                        cv2.imshow("Latent Self", error_frame)
+                        cv2.waitKey(1)
+
+                    self.stop_event.wait(retry_delay)
+                    retry_delay = min(retry_delay * 2, max_delay)
+                    self.cap = cv2.VideoCapture(self.camera_index)
+                    if self.cap.isOpened():
+                        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.resolution)
+                        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.resolution)
+                        self.camera_available = True
+                        retry_delay = 1.0
+                        logging.info("Camera re-initialized successfully.")
+                    continue
+
+                ret, frame = self.cap.read()
+                if not ret:
+                    logging.error("Camera read failed – retrying")
+                    self.camera_available = False
+                    continue
+
+                now = time()
+                if baseline_latent is None or (now - last_encode) > self.REENCODE_INTERVAL_S:
+                    baseline_latent = self.encode_face(frame)
+                    last_encode = now
+                    logging.info("Encoded new baseline latent.")
+
+                offset, current_magnitude = self.latent_offset(now)
+                latent_mod = baseline_latent + torch.from_numpy(offset).to(self.device)
+                out_frame = self.decode_latent(latent_mod, (frame.shape[0], frame.shape[1]))
+
+                eyes = self.tracker.left_eye, self.tracker.right_eye
+                if eyes[0] is not None and eyes[1] is not None:
+                    idle_frames = 0
+                    cv2.circle(out_frame, eyes[0], 3, (0, 255, 0), -1)
+                    cv2.circle(out_frame, eyes[1], 3, (0, 255, 0), -1)
+                else:
+                    idle_frames += 1
+
+                cv2.putText(
+                    out_frame,
+                    f"Mode: {self.active_direction.capitalize()} ({current_magnitude:+.1f})",
+                    (10, out_frame.shape[0] - 20),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
+                    (255, 255, 255),
+                    2,
+                    cv2.LINE_AA,
+                )
+
+                if idle_frames > idle_threshold:
+                    alpha = min(1.0, (idle_frames - idle_threshold) / fade_frames)
+                    overlay = out_frame.copy()
+                    overlay[:] = (0, 0, 0)
+                    cv2.addWeighted(overlay, alpha, out_frame, 1 - alpha, 0, out_frame)
 
                 if self.ui == 'qt' and frame_emitter:
-                    frame_emitter.emit(_numpy_to_qimage(error_frame))
+                    if hasattr(self, 'window') and hasattr(self.window, 'direction_uis'):
+                        for name, ui_elements in self.window.direction_uis.items():
+                            value = current_magnitude if name.upper() == self.active_direction else 0.0
+                            if self._hud_values.get(name.upper()) != value:
+                                self._hud_values[name.upper()] = value
+                                label = self.direction_labels.get(name.upper(), name.capitalize())
+                                ui_elements.label.setText(f"{label}: {value:+.1f}")
+
+                    frame_emitter.emit(_numpy_to_qimage(out_frame))
+                    QThread.msleep(int(1000 / self.config.data['fps']))
                 else:
-                    cv2.imshow("Latent Self", error_frame)
-                    cv2.waitKey(1) # Needed to update the window
+                    cv2.imshow("Latent Self", out_frame)
+                    key = cv2.waitKey(int(1000 / self.config.data['fps'])) & 0xFF
+                    if key == ord("q"):
+                        self.stop_event.set()
+                        break
+                    elif key == ord("y"):
+                        self.active_direction = "AGE"
+                    elif key == ord("g"):
+                        self.active_direction = "GENDER"
+                    elif key == ord("h"):
+                        self.active_direction = "SMILE"
+                    elif key == ord("s"):
+                        self.active_direction = "SPECIES"
+                    elif key == ord("b"):
+                        self.active_direction = "BLEND"
 
-                self.stop_event.wait(5) # Wait for 5 seconds before retrying
-                # Attempt to re-initialize camera
-                self.cap = cv2.VideoCapture(self.camera_index) # Assuming camera_index is stored
-                if self.cap.isOpened():
-                    self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.resolution)
-                    self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.resolution)
-                    self.camera_available = True
-                    logging.info("Camera re-initialized successfully.")
-                continue
-
-            ret, frame = self.cap.read()
-            if not ret:
-                logging.error("Camera read failed – aborting")
-                self.camera_available = False # Mark camera as unavailable
-                continue
-
-            now = time()
-            if baseline_latent is None or (now - last_encode) > self.REENCODE_INTERVAL_S:
-                baseline_latent = self.encode_face(frame)
-                last_encode = now
-                logging.info("Encoded new baseline latent.")
-
-            offset, current_magnitude = self.latent_offset(now)
-            latent_mod = baseline_latent + torch.from_numpy(offset).to(self.device)
-            out_frame = self.decode_latent(latent_mod, (frame.shape[0], frame.shape[1]))
-
-            # Draw tracked eyes for debug
-            eyes = self.tracker.left_eye, self.tracker.right_eye
-            if eyes[0] is not None and eyes[1] is not None:
-                idle_frames = 0
-                cv2.circle(out_frame, eyes[0], 3, (0,255,0), -1)
-                cv2.circle(out_frame, eyes[1], 3, (0,255,0), -1)
-            else:
-                idle_frames += 1
-
-            cv2.putText(
-                out_frame,
-                f"Mode: {self.active_direction.capitalize()} ({current_magnitude:+.1f})",
-                (10, out_frame.shape[0] - 20), # Position at bottom-left
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.7, (255, 255, 255), 2, cv2.LINE_AA
-            )
-
-            if idle_frames > idle_threshold:
-                alpha = min(1.0, (idle_frames - idle_threshold) / fade_frames)
-                overlay = out_frame.copy()
-                overlay[:] = (0, 0, 0)
-                cv2.addWeighted(overlay, alpha, out_frame, 1 - alpha, 0, out_frame)
-
-            if self.ui == 'qt' and frame_emitter:
-                # Update HUD if it exists
-                if hasattr(self, 'window') and hasattr(self.window, 'direction_uis'):
-                    for name, ui_elements in self.window.direction_uis.items():
-                        if name.upper() == self.active_direction:
-                            value = current_magnitude
-                        else:
-                            value = 0.0
-                        if self._hud_values.get(name.upper()) != value:
-                            self._hud_values[name.upper()] = value
-                            label = self.direction_labels.get(name.upper(), name.capitalize())
-                            ui_elements.label.setText(f"{label}: {value:+.1f}")
-
-                frame_emitter.emit(_numpy_to_qimage(out_frame))
-                QThread.msleep(int(1000 / self.config.data['fps']))
-            else:
-                cv2.imshow("Latent Self", out_frame)
-                key = cv2.waitKey(int(1000 / self.config.data['fps'])) & 0xFF
-                if key == ord("q"):
-                    self.stop_event.set()
-                    break
-                elif key == ord("y"):
-                    self.active_direction = "AGE"
-                elif key == ord("g"):
-                    self.active_direction = "GENDER"
-                elif key == ord("h"):
-                    self.active_direction = "SMILE"
-                elif key == ord("s"):
-                    self.active_direction = "SPECIES"
-                elif key == ord("b"):
-                    self.active_direction = "BLEND"
-
-            self._send_mqtt_heartbeat()
-
-        self.cap.release()
-        if self.ui == 'cv2':
-            cv2.destroyAllWindows()
+                    self._send_mqtt_heartbeat()
+        finally:
+            self.cap.release()
+            if self.ui == 'cv2':
+                cv2.destroyAllWindows()
 
     # ------------------------------------------------------------------
     # Public API
@@ -706,14 +720,38 @@ class LatentSelf:
     def run(self) -> None:
         """Start the application."""
         logging.info("Starting Latent Self…")
-        if self.ui == 'qt':
-            if not QT_AVAILABLE:
-                logging.error("Qt UI requested, but PyQt6 is not installed. Please run: pip install PyQt6")
-                sys.exit(1)
-            self._run_qt()
-        else:
-            self._run_cv2()
-        logging.info("Application shut down gracefully.")
+        try:
+            if self.ui == 'qt':
+                if not QT_AVAILABLE:
+                    logging.error(
+                        "Qt UI requested, but PyQt6 is not installed. Please run: pip install PyQt6"
+                    )
+                    sys.exit(1)
+                self._run_qt()
+            else:
+                self._run_cv2()
+        except Exception:
+            logging.exception("Unhandled exception")
+            if QT_AVAILABLE and self.ui == 'qt':
+                from PyQt6.QtWidgets import QMessageBox
+
+                QMessageBox.critical(None, "Latent Self Error", "An unexpected error occurred. Check logs.")
+        finally:
+            self.stop_event.set()
+            if self._processing_thread is not None:
+                if isinstance(self._processing_thread, Thread):
+                    self._processing_thread.join(timeout=1)
+                else:
+                    self._processing_thread.wait()
+            if self.mqtt_client:
+                try:
+                    self.mqtt_client.loop_stop()
+                    self.mqtt_client.disconnect()
+                except Exception as e:
+                    logging.warning(f"MQTT cleanup failed: {e}")
+            if self.cap is not None and self.cap.isOpened():
+                self.cap.release()
+            logging.info("Application shut down gracefully.")
 
     def _run_cv2(self) -> None:
         logging.info("Using cv2 UI. Controls: [q]uit | [y]age | [g]ender | [h]smile | [s]pecies | [b]lend")
