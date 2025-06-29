@@ -17,6 +17,7 @@ class AdminDialog(QDialog):
         self.setModal(True)
 
         if not self._check_password():
+            self.reject()
             return
 
         self._setup_ui()
