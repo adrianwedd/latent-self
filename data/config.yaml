@@ -1,0 +1,28 @@
+# Default configuration for Latent Self
+#
+# This file is copied to ~/.latent_self/config.yaml on first run.
+# Settings here can be overridden by command-line arguments.
+
+# -- Morphing Controls --
+cycle_duration: 12.0  # Duration of one morph cycle in seconds
+blend_weights:
+  age: 0.4
+  gender: 0.3
+  ethnicity: 0.5
+  species: 0.2
+
+# -- Performance --
+fps: 15  # Target frames per second
+tracker_alpha: 0.4  # Smoothing factor for eye tracking (0.0 - 1.0)
+
+# -- Admin Panel --
+admin_password_hash: "pbkdf2:sha256:260000$cTqL9kE3jJtNlY8a$c5badd8a9b3a2b3a2b3a2b3a2b3a2b3a2b3a2b3a2b3a2b3a2b3a2b3a2b3a"  # Default: "admin"
+
+# -- MQTT (optional) --
+mqtt:
+  enabled: false
+  broker: "localhost"
+  port: 1883
+  topic_namespace: "mirror"
+  device_id: ""
+  heartbeat_interval: 5

@@ -1,0 +1,6 @@
+age:
+  max_magnitude: 3.0
+gender:
+  max_magnitude: 3.0
+smile:
+  max_magnitude: 3.0

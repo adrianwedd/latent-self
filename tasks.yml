@@ -1,0 +1,208 @@
+PHASE_D_POLISH:
+  - id: POLISH-001
+    title: Add structured logging throughout application
+    desc: Replace scattered `print()` or default logging with a consistent logging setup using Python’s `logging` module. Output to file and optionally to console.
+    tags: [logging, robustness, polish]
+    priority: P3
+    status: done
+
+  - id: POLISH-002
+    title: Implement idle state overlay
+    desc: Fade in a translucent idle screen when no face is detected for N seconds. Fade out immediately when a face returns.
+    tags: [ux, polish, overlay]
+    priority: P3
+    status: done
+
+  - id: POLISH-003
+    title: Validate `latent_self.spec` for PyInstaller
+    desc: Ensure it includes necessary hidden imports, config path logic (using `sys._MEIPASS`), and bundles assets correctly.
+    tags: [packaging, deployment]
+    priority: P3
+    status: done
+
+  - id: POLISH-004
+    title: Harden `install_kiosk.sh` script
+    desc: Make the script idempotent, OS-agnostic, and validate presence of required binaries and permissions. Provide clear output on success/failure.
+    tags: [deployment, robustness]
+    priority: P3
+    status: done
+
+  - id: POLISH-005
+    title: Implement reload-safe config layer
+    desc: Ensure all config changes via admin UI can be reloaded at runtime with minimal disruption (e.g., `LatentSelf.reload()` pattern).
+    tags: [config, live-reload, polish]
+    priority: P3
+    status: done
+
+  - id: POLISH-006
+    title: Add `device-id` to MQTT heartbeat
+    desc: (Optional) If MQTT support is restored, include a stable `device-id` in heartbeat payload (e.g., hostname or MAC).
+    tags: [monitoring, optional, mqtt]
+    priority: P3
+    status: done
+
+  - id: POLISH-007
+    title: Add fallback behavior for camera failure
+    desc: If the webcam is not detected, show a fullscreen error screen and retry gracefully. Do not crash.
+    tags: [robustness, ui]
+    priority: P3
+    status: done
+
+  - id: POLISH-008
+    title: Add CLI `--test` or `--demo` mode
+    desc: Launch the app using prerecorded media or static images if no webcam is available — useful for headless or CI environments.
+    tags: [debugging, robustness]
+    priority: P3
+    status: optional
+
+  - id: POLISH-009
+    title: Validate all sliders in admin.py are working and write back to config
+    desc: Ensure any adjustable parameter (cycle, blend, species, etc.) updates the config file and takes effect live.
+    tags: [admin, config, ui]
+    priority: P2
+    status: done
+
+  - id: POLISH-010
+    title: Update `data/config.yaml` with `species` blend weight
+    desc: Add a default value for `species` blend weight in `data/config.yaml`.
+    tags: [config, polish]
+    priority: P2
+    status: done
+
+PHASE_E_SPECIES:
+  - id: SPECIES-001
+    title: Add SPECIES latent direction to `latent_directions.npz`
+    desc: Curate training data, run the direction learning notebook, normalize the result, and merge into the existing `.npz`.
+    tags: [gan, latent-space, morphing]
+    priority: P2
+    status: todo
+
+  - id: SPECIES-002
+    title: Integrate SPECIES direction into latent offset code
+    desc: Add `--blend-species` CLI arg and `key == Qt.Key_S` clause to morphing logic, mirroring AGE/GENDER/ETHNICITY support.
+    tags: [gan, morphing, ui]
+    priority: P3
+    status: done
+
+  - id: SPECIES-003
+    title: Add SPECIES slider to admin panel
+    desc: Allow real-time tuning of species blend in the PyQt admin overlay.
+    tags: [admin, morphing, ui]
+    priority: P3
+    status: done
+
+PHASE_F_DOCS_AGENTS:
+  - id: DOCS-001
+    title: Author comprehensive README.md
+    desc: Generate a top-level README with project overview, install steps, quick-start, feature list, badges, and a small demo GIF placeholder.
+    tags: [docs, readme]
+    priority: P1
+    status: todo
+
+  - id: DOCS-002
+    title: Build MkDocs site skeleton
+    desc: Create docs/ with mkdocs.yml using Material theme, navigation stubs for Getting Started, Architecture, Configuration, Deployment, FAQ, and API Reference.
+    tags: [docs, mkdocs]
+    priority: P1
+    status: todo
+
+  - id: DOCS-003
+    title: Autogenerate API docstrings
+    desc: Insert Google‑style docstrings into all public classes/functions and ensure sphinx‐autodoc compatibility.
+    tags: [docs, api, docstrings]
+    priority: P1
+    status: todo
+
+  - id: DOCS-004
+    title: CONTRIBUTING.md template
+    desc: Provide contribution guidelines, code style, PR checklist, and issue labels.
+    tags: [docs, community]
+    priority: P2
+    status: todo
+
+  - id: DOCS-005
+    title: Add CHANGELOG.md scaffold
+    desc: Introduce Keep‑a‑Changelog format and populate 0.4.0 → HEAD history using git log.
+    tags: [docs, release]
+    priority: P2
+    status: todo
+
+  - id: DOCS-006
+    title: Docs CI workflow
+    desc: Create GitHub Action that builds docs, lints markdown links with lychee, and fails on warnings.
+    tags: [ci, docs]
+    priority: P1
+    status: todo
+
+PHASE_G_TESTS_AGENTS:
+  - id: TEST-001
+    title: Unit tests for latent_offset
+    desc: Write pytest cases covering magnitude range, blend mode, and single‑direction behaviour.
+    tags: [tests, core]
+    priority: P1
+    status: todo
+
+  - id: TEST-002
+    title: Unit tests for Config.reload and apply
+    desc: Ensure live reload updates cycle_duration, blend_weights, and tracker_alpha without app restart.
+    tags: [tests, config]
+    priority: P1
+    status: todo
+
+  - id: TEST-003
+    title: Unit tests for MQTT heartbeat
+    desc: Mock paho.mqtt client and assert heartbeat payload & interval.
+    tags: [tests, mqtt]
+    priority: P1
+    status: todo
+
+  - id: TEST-004
+    title: Type & lint gates
+    desc: Add ruff and mypy configs; create CI job that fails on style or type errors.
+    tags: [ci, lint]
+    priority: P1
+    status: todo
+
+PHASE_H_CI_CD_AGENTS:
+  - id: CI-001
+    title: GitHub Actions matrix
+    desc: Build, test on macOS‑arm64 and ubuntu‑latest, run mkdocs, bundle PyInstaller artifact.
+    tags: [ci, build]
+    priority: P1
+    status: todo
+
+  - id: CI-002
+    title: Systemd service & watchdog
+    desc: Draft latent-self.service with auto‑restart and WatchdogSec; include install docs.
+    tags: [deployment, systemd]
+    priority: P1
+    status: todo
+
+PHASE_I_HOTFIXES:
+  - id: HOTFIX-001
+    title: Deduplicate/guard VideoWorker definitions
+    desc: Remove global duplicate VideoWorker class or wrap it in `if QT_AVAILABLE:` to eliminate NameError when Qt is absent.
+    tags: [bugfix, qt, threading]
+    priority: P0
+    status: todo
+
+  - id: HOTFIX-002
+    title: Single source of truth for direction sliders
+    desc: Move per‑direction max_magnitude and labels into directions.yaml; HUD reads once instead of updating every frame.
+    tags: [refactor, config, ui]
+    priority: P0
+    status: todo
+
+  - id: HOTFIX-003
+    title: Catch Mediapipe runtime exceptions
+    desc: Wrap Mediapipe face_mesh processing in try/except loop; disable tracker gracefully after consecutive failures.
+    tags: [bugfix, robustness]
+    priority: P0
+    status: todo
+
+  - id: HOTFIX-004
+    title: Remove duplicate _apply_config() call
+    desc: Eliminate the repeated call inside Config.reload to avoid redundant work and potential double logging.
+    tags: [bugfix, config]
+    priority: P0
+    status: todo

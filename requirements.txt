@@ -1,0 +1,9 @@
+appdirs
+opencv-python
+mediapipe
+numpy
+torch
+PyYAML
+PyQt6
+paho-mqtt
+Werkzeug

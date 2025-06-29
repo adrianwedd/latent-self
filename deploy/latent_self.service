@@ -1,0 +1,13 @@
+[Unit]
+Description=Latent Self Kiosk
+After=network.target
+
+[Service]
+ExecStart=/opt/latent-self/latent-self --ui qt
+Restart=on-failure
+WatchdogSec=30s
+Type=simple
+User=kiosk
+
+[Install]
+WantedBy=multi-user.target
