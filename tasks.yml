@@ -11,7 +11,7 @@ PHASE_D_POLISH:
     desc: Fade in a translucent idle screen when no face is detected for N seconds. Fade out immediately when a face returns.
     tags: [ux, polish, overlay]
     priority: P3
-    status: done
+    status: todo
 
   - id: POLISH-003
     title: Validate `latent_self.spec` for PyInstaller
@@ -82,7 +82,7 @@ PHASE_E_SPECIES:
     desc: Add `--blend-species` CLI arg and `key == Qt.Key_S` clause to morphing logic, mirroring AGE/GENDER/ETHNICITY support.
     tags: [gan, morphing, ui]
     priority: P3
-    status: done
+    status: todo
 
   - id: SPECIES-003
     title: Add SPECIES slider to admin panel
@@ -97,7 +97,7 @@ PHASE_F_DOCS_AGENTS:
     desc: Generate a top-level README with project overview, install steps, quick-start, feature list, badges, and a small demo GIF placeholder.
     tags: [docs, readme]
     priority: P1
-    status: todo
+    status: done
 
   - id: DOCS-002
     title: Build MkDocs site skeleton
@@ -184,7 +184,7 @@ PHASE_I_HOTFIXES:
     desc: Remove global duplicate VideoWorker class or wrap it in `if QT_AVAILABLE:` to eliminate NameError when Qt is absent.
     tags: [bugfix, qt, threading]
     priority: P0
-    status: todo
+    status: done
 
   - id: HOTFIX-002
     title: Single source of truth for direction sliders
@@ -198,11 +198,11 @@ PHASE_I_HOTFIXES:
     desc: Wrap Mediapipe face_mesh processing in try/except loop; disable tracker gracefully after consecutive failures.
     tags: [bugfix, robustness]
     priority: P0
-    status: todo
+    status: done
 
   - id: HOTFIX-004
     title: Remove duplicate _apply_config() call
     desc: Eliminate the repeated call inside Config.reload to avoid redundant work and potential double logging.
     tags: [bugfix, config]
     priority: P0
-    status: todo
+    status: done

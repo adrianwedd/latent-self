@@ -1,3 +1,12 @@
+# AGENT INSTRUCTIONS
+
+## Testing
+- Run `python -m py_compile latent_self.py ui/*.py` before committing.
+
+## Tasks
+- Keep `tasks.yml` in sync with implemented features.
+- Update task status to `done` when functionality is completed.
+
 # Latent Self
 
 This project is an interactive art installation that uses a webcam to capture a user's face and then applies a series of transformations to it in real-time. The transformed image is then displayed on a screen, creating a "latent self" of the user.
