@@ -51,7 +51,7 @@ import cv2
 import numpy as np
 import torch
 import yaml
-from services import ConfigManager, ModelManager, VideoProcessor, TelemetryClient, asset_path
+from services import ConfigManager, ModelManager, VideoProcessor, TelemetryClient, asset_path, MemoryMonitor
 
 try:
     import mediapipe as mp
@@ -109,8 +109,11 @@ class LatentSelf:
         self.telemetry = telemetry or TelemetryClient(config)
         self.video = video_processor or VideoProcessor(self.model_manager, config, self.device, camera_index, resolution, ui, self.telemetry)
 
+        self.memory = MemoryMonitor(config)
+
     def run(self) -> None:
         logging.info("Starting Latent Self…")
+        self.memory.start()
         try:
             if self.ui == "qt":
                 if not QT_AVAILABLE:
@@ -128,6 +131,8 @@ class LatentSelf:
             self.video.stop()
             if self.telemetry:
                 self.telemetry.shutdown()
+            self.model_manager.unload()
+            self.memory.stop()
             logging.info("Application shut down gracefully.")
 
     def _run_cv2(self) -> None:
@@ -176,6 +181,8 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--resolution", type=int, default=512, help="Square frame size (px)")
     parser.add_argument("--fps", type=int, default=None, help="Target frames per second (overrides config)")
     parser.add_argument("--cuda", action="store_true", help="Use CUDA if available")
+    parser.add_argument("--max-cpu-mem", type=int, default=None, help="Max CPU memory MB before warning")
+    parser.add_argument("--max-gpu-mem", type=float, default=None, help="Max GPU memory GB before warning")
     parser.add_argument("--weights", type=Path, default=asset_path("models"), help="Directory for model weights")
     parser.add_argument("--ui", type=str, default="cv2", choices=["cv2", "qt"], help="UI backend to use")
     parser.add_argument("--kiosk", action="store_true", help="Hide cursor and launch fullscreen (Qt only)")

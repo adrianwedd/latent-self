@@ -334,7 +334,7 @@ PHASE_K_AUDIT:
     desc: Unload models when not used, reuse tensor buffers, add memory monitor & config limits.
     tags: [performance]
     priority: P2
-    status: todo
+    status: done
 
   - id: AUDIT-008
     title: Adaptive frame-rate & frame-dropping

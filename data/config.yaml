@@ -14,6 +14,9 @@ blend_weights:
 # -- Performance --
 fps: 15  # Target frames per second
 tracker_alpha: 0.4  # Smoothing factor for eye tracking (0.0 - 1.0)
+max_cpu_mem_mb: 
+max_gpu_mem_gb: 
+memory_check_interval: 10
 
 # -- Admin Panel --
 admin_password_hash: "pbkdf2:sha256:260000$cTqL9kE3jJtNlY8a$c5badd8a9b3a2b3a2b3a2b3a2b3a2b3a2b3a2b3a2b3a2b3a2b3a2b3a2b3a"  # Default: "admin"
