@@ -32,7 +32,7 @@ class MirrorWindow(QMainWindow):
         elif event.key() in (Qt.Key.Key_Q, Qt.Key.Key_Escape):
             self.close()
         elif event.key() == Qt.Key.Key_S:
-            self.app.active_direction = "SPECIES"
+            self.app.video.enqueue_direction("SPECIES")
 
     def show_fullscreen(self) -> None:
         """Show the window in fullscreen mode and hide the cursor."""

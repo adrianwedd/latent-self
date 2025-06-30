@@ -290,7 +290,7 @@ PHASE_K_AUDIT:
       • Verify camera open/close is called only from one thread.
     tags: [bugfix, threading]
     priority: P0
-    status: todo
+    status: done
 
   - id: AUDIT-003
     title: Robust error & resource management
