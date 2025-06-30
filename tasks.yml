@@ -399,4 +399,4 @@ PHASE_K_AUDIT:
     desc: Fill missing docstrings, add architecture diagram (PlantUML) to docs site.
     tags: [docs]
     priority: P3
-    status: todo
+    status: done

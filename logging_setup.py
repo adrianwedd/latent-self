@@ -1,3 +1,5 @@
+"""Logging utilities for console and kiosk modes."""
+
 import json
 import logging
 from logging import LogRecord
