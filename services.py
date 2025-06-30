@@ -7,7 +7,8 @@ import platform
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from threading import Event, Thread
+from threading import Event, Thread, Lock
+from queue import SimpleQueue
 from time import time
 from typing import Any, Dict
 
@@ -266,19 +267,17 @@ class VideoProcessor:
         self.ui = ui
         self.telemetry = telemetry
 
-        self.cap = cv2.VideoCapture(camera_index)
-        self.camera_available = self.cap.isOpened()
-        if self.camera_available:
-            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, resolution)
-            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, resolution)
-        else:
-            logging.error("Failed to open camera at index %s", camera_index)
+        self.cap: cv2.VideoCapture | None = None
+        self.camera_available = False
 
         self.tracker = _EyeTracker(alpha=self.config.data.get("tracker_alpha", 0.4))
+        self.tracker_lock = Lock()
         self._canonical = np.array([[80.0, 100.0], [176.0, 100.0]], dtype=np.float32)
         self.stop_event = Event()
         self._processing_thread: Thread | None = None
         self.REENCODE_INTERVAL_S = 10.0
+        self._direction_lock = Lock()
+        self.command_queue: SimpleQueue[str] = SimpleQueue()
         self.active_direction = "BLEND"
         self._last_affine: np.ndarray | None = None
 
@@ -291,13 +290,15 @@ class VideoProcessor:
         self.max_magnitudes = {k.upper(): v["max_magnitude"] for k, v in self.config.directions_data.items()}
         self.direction_labels = {k.upper(): v.get("label", k.capitalize()) for k, v in self.config.directions_data.items()}
         self._hud_values = {k: None for k in self.direction_labels}
-        self.tracker.alpha = self.config.data.get("tracker_alpha", 0.4)
+        with self.tracker_lock:
+            self.tracker.alpha = self.config.data.get("tracker_alpha", 0.4)
 
     # ------------------------------------------------------------------
     # Core latent helpers
     # ------------------------------------------------------------------
     def encode_face(self, frame: np.ndarray) -> torch.Tensor:
-        eyes = self.tracker.get_eyes(frame)
+        with self.tracker_lock:
+            eyes = self.tracker.get_eyes(frame)
         if eyes is None:
             crop = cv2.resize(frame, (256, 256))
             M = None
@@ -324,17 +325,20 @@ class VideoProcessor:
         phase = (t % self.cycle_seconds) / self.cycle_seconds
         raw_amt = 1.0 - abs(phase * 2.0 - 1.0)
 
-        if self.active_direction == "BLEND":
+        with self._direction_lock:
+            active = self.active_direction
+
+        if active == "BLEND":
             valid_weights = {k: v for k, v in self.blend_weights.items() if k in self.model_manager.latent_dirs}
             total_weight = sum(valid_weights.values()) or 1.0
             direction = sum((w / total_weight) * self.model_manager.latent_dirs[k] for k, w in valid_weights.items())
             max_mag = 3.0
         else:
-            if self.active_direction not in self.model_manager.latent_dirs:
-                logging.warning("Direction '%s' not found in latent directions", self.active_direction)
+            if active not in self.model_manager.latent_dirs:
+                logging.warning("Direction '%s' not found in latent directions", active)
                 return np.zeros(512), 0.0
-            direction = self.model_manager.latent_dirs[self.active_direction]
-            max_mag = self.max_magnitudes.get(self.active_direction, 3.0)
+            direction = self.model_manager.latent_dirs[active]
+            max_mag = self.max_magnitudes.get(active, 3.0)
 
         current_magnitude = raw_amt * max_mag
         return current_magnitude * direction, current_magnitude
@@ -346,6 +350,14 @@ class VideoProcessor:
     def _process_stream(self, frame_emitter: "pyqtSignal" | None = None) -> None:
         from PyQt6.QtCore import QThread
 
+        self.cap = cv2.VideoCapture(self.camera_index)
+        self.camera_available = self.cap.isOpened()
+        if self.camera_available:
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.resolution)
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.resolution)
+        else:
+            logging.error("Failed to open camera at index %s", self.camera_index)
+
         baseline_latent: torch.Tensor | None = None
         last_encode = 0.0
         idle_frames = 0
@@ -356,6 +368,7 @@ class VideoProcessor:
 
         try:
             while not self.stop_event.is_set():
+                self._drain_direction_queue()
                 if not self.camera_available:
                     logging.error("Camera not available. Displaying error screen and retrying...")
                     h, w = self.resolution, self.resolution
@@ -408,9 +421,11 @@ class VideoProcessor:
                 else:
                     idle_frames += 1
 
+                with self._direction_lock:
+                    mode_label = self.active_direction
                 cv2.putText(
                     out_frame,
-                    f"Mode: {self.active_direction.capitalize()} ({current_magnitude:+.1f})",
+                    f"Mode: {mode_label.capitalize()} ({current_magnitude:+.1f})",
                     (10, out_frame.shape[0] - 20),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.7,
@@ -435,19 +450,25 @@ class VideoProcessor:
                         self.stop_event.set()
                         break
                     elif key == ord("y"):
-                        self.active_direction = "AGE"
+                        with self._direction_lock:
+                            self.active_direction = "AGE"
                     elif key == ord("g"):
-                        self.active_direction = "GENDER"
+                        with self._direction_lock:
+                            self.active_direction = "GENDER"
                     elif key == ord("h"):
-                        self.active_direction = "SMILE"
+                        with self._direction_lock:
+                            self.active_direction = "SMILE"
                     elif key == ord("s"):
-                        self.active_direction = "SPECIES"
+                        with self._direction_lock:
+                            self.active_direction = "SPECIES"
                     elif key == ord("b"):
-                        self.active_direction = "BLEND"
+                        with self._direction_lock:
+                            self.active_direction = "BLEND"
 
                     self._send_mqtt_heartbeat()
         finally:
-            self.cap.release()
+            if self.cap is not None:
+                self.cap.release()
             if self.ui == "cv2":
                 cv2.destroyAllWindows()
 
@@ -464,6 +485,21 @@ class VideoProcessor:
     def stop(self) -> None:
         self.stop_event.set()
         self.join()
+
+    # Direction control -------------------------------------------------
+    def enqueue_direction(self, direction: str) -> None:
+        """Request a change of active direction from another thread."""
+        self.command_queue.put(direction.upper())
+
+    def _drain_direction_queue(self) -> None:
+        while not self.command_queue.empty():
+            new_dir = self.command_queue.get_nowait()
+            with self._direction_lock:
+                self.active_direction = new_dir
+
+    def get_active_direction(self) -> str:
+        with self._direction_lock:
+            return self.active_direction
 
 
 # ---------------------------------------------------------------------------
