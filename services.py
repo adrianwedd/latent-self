@@ -65,6 +65,12 @@ class ConfigManager:
     """Load and manage configuration YAML files."""
 
     def __init__(self, cli_args: argparse.Namespace, app: Any | None = None) -> None:
+        """Initialize the manager and load configuration files.
+
+        Args:
+            cli_args: Parsed command line arguments used for overrides.
+            app: Optional application instance to notify on reloads.
+        """
         self.config_dir = Path(appdirs.user_config_dir("LatentSelf"))
         self.config_path = self.config_dir / "config.yaml"
         self.directions_path = self.config_dir / "directions.yaml"
@@ -77,6 +83,7 @@ class ConfigManager:
         self._override_with_cli(cli_args)
 
     def _ensure_config_exists(self) -> None:
+        """Create a default ``config.yaml`` if one is missing."""
         if not self.config_path.exists():
             self.config_dir.mkdir(parents=True, exist_ok=True)
             default_config = asset_path("data/config.yaml")
@@ -84,6 +91,7 @@ class ConfigManager:
             logging.info(f"Created default config at {self.config_path}")
 
     def _ensure_directions_exists(self) -> None:
+        """Create ``directions.yaml`` if it does not exist."""
         if not self.directions_path.exists():
             self.config_dir.mkdir(parents=True, exist_ok=True)
             default_directions = asset_path("data/directions.yaml")
@@ -212,6 +220,12 @@ class ModelManager:
     """Manage ML models used by the application."""
 
     def __init__(self, weights_dir: Path, device: torch.device) -> None:
+        """Load models and latent directions.
+
+        Args:
+            weights_dir: Directory containing the model weights.
+            device: Torch device to map the models onto.
+        """
         self.weights_dir = weights_dir
         self.device = device
         self.G = get_stylegan_generator(weights_dir).to(device)
@@ -245,6 +259,11 @@ class _EyeTracker:
     """Lightweight eye-landmark tracker using Mediapipe."""
 
     def __init__(self, alpha: float = 0.4) -> None:
+        """Create a new tracker instance.
+
+        Args:
+            alpha: Smoothing factor between 0 and 1 for landmark movement.
+        """
         self.mesh = mp.solutions.face_mesh.FaceMesh(
             static_image_mode=False,
             max_num_faces=1,
@@ -255,6 +274,15 @@ class _EyeTracker:
         self.right_eye: tuple[int, int] | None = None
 
     def get_eyes(self, frame_bgr: np.ndarray) -> tuple[tuple[int, int], tuple[int, int]] | None:
+        """Return smoothed eye coordinates from a BGR frame.
+
+        Args:
+            frame_bgr: Current video frame in BGR format.
+
+        Returns:
+            Tuple of ``(left_eye, right_eye)`` pixel coordinates if a face is
+            detected, otherwise ``None``.
+        """
         try:
             res = self.mesh.process(cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB))
         except Exception as e:  # mediapipe can throw
@@ -320,6 +348,17 @@ class VideoProcessor:
         ui: str,
         telemetry: "TelemetryClient | None" = None,
     ) -> None:
+        """Create a new processor instance.
+
+        Args:
+            model_manager: Provider of GAN and encoder models.
+            config: Configuration manager with runtime settings.
+            device: Torch device for heavy computation.
+            camera_index: Index of the webcam to open.
+            resolution: Square frame size in pixels.
+            ui: ``"cv2"`` or ``"qt"`` user interface backend.
+            telemetry: Optional telemetry client for heartbeats.
+        """
         self.model_manager = model_manager
         self.config = config
         self.device = device
@@ -346,6 +385,7 @@ class VideoProcessor:
 
     # Configuration from config manager
     def _apply_config(self) -> None:
+        """Apply the latest configuration values to runtime state."""
         self.cycle_seconds = self.config.data["cycle_duration"]
         self.blend_weights = {Direction.from_str(k).value: v for k, v in self.config.data["blend_weights"].items()}
         self.max_magnitudes = {Direction.from_str(k).value: v["max_magnitude"] for k, v in self.config.directions_data.items()}
@@ -536,15 +576,18 @@ class VideoProcessor:
 
     # Public control -----------------------------------------------------
     def start(self, frame_emitter: "pyqtSignal" | None = None) -> None:
+        """Begin processing the camera stream in a background thread."""
         self.stop_event.clear()
         self._processing_thread = Thread(target=self._process_stream, args=(frame_emitter,), daemon=True)
         self._processing_thread.start()
 
     def join(self) -> None:
+        """Block until the processing thread exits."""
         if self._processing_thread is not None:
             self._processing_thread.join()
 
     def stop(self) -> None:
+        """Signal the processing thread to stop and wait for shutdown."""
         self.stop_event.set()
         self.join()
 
@@ -556,6 +599,7 @@ class VideoProcessor:
         self.command_queue.put(direction)
 
     def _drain_direction_queue(self) -> None:
+        """Apply any queued direction changes."""
         while not self.command_queue.empty():
             new_dir = self.command_queue.get_nowait()
             with self._direction_lock:
@@ -575,6 +619,7 @@ class TelemetryClient:
     """Lightweight MQTT heartbeat publisher."""
 
     def __init__(self, config: ConfigManager) -> None:
+        """Connect to the broker if telemetry is enabled."""
         if not MQTT_AVAILABLE or not config.data.get("mqtt", {}).get("enabled"):
             self.client = None
             return
@@ -625,6 +670,7 @@ class MemoryMonitor:
     """Background memory usage monitor."""
 
     def __init__(self, config: ConfigManager) -> None:
+        """Create a memory monitor from configuration values."""
         self.interval = config.data.get("memory_check_interval", 10)
         self.max_cpu_mb = config.data.get("max_cpu_mem_mb")
         self.max_gpu_gb = config.data.get("max_gpu_mem_gb")

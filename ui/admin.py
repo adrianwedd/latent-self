@@ -11,6 +11,7 @@ class AdminDialog(QDialog):
     """A dialog for adjusting application settings."""
 
     def __init__(self, parent=None):
+        """Prompt for password and prepare the form."""
         super().__init__(parent)
         self.app = parent.app
         self.setWindowTitle("Admin Panel")

@@ -1,0 +1,8 @@
+site_name: Latent Self
+theme:
+  name: material
+nav:
+  - Home: index.md
+  - Architecture: architecture.puml
+
+docs_dir: docs
