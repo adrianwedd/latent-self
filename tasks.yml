@@ -385,7 +385,7 @@ PHASE_K_AUDIT:
     desc: Add unit tests with camera/model mocks, integration test for encode→decode pipeline, config validation tests.
     tags: [tests]
     priority: P2
-    status: todo
+    status: done
 
   - id: AUDIT-014
     title: YAML schema validation test
