@@ -13,6 +13,7 @@ jobs:
         with:
           python-version: '3.11'
       - run: python -m pip install --upgrade pip
-      - run: pip install -r requirements.txt mypy pytest
+      - run: pip install -r requirements.txt mypy pytest ruff
+      - run: ruff .
       - run: mypy --install-types --non-interactive .
       - run: pytest -q

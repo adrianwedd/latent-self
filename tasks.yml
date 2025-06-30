@@ -140,28 +140,28 @@ PHASE_G_TESTS_AGENTS:
     desc: Write pytest cases covering magnitude range, blend mode, and single‑direction behaviour.
     tags: [tests, core]
     priority: P1
-    status: todo
+    status: done
 
   - id: TEST-002
     title: Unit tests for Config.reload and apply
     desc: Ensure live reload updates cycle_duration, blend_weights, and tracker_alpha without app restart.
     tags: [tests, config]
     priority: P1
-    status: todo
+    status: done
 
   - id: TEST-003
     title: Unit tests for MQTT heartbeat
     desc: Mock paho.mqtt client and assert heartbeat payload & interval.
     tags: [tests, mqtt]
     priority: P1
-    status: todo
+    status: done
 
   - id: TEST-004
     title: Type & lint gates
     desc: Add ruff and mypy configs; create CI job that fails on style or type errors.
     tags: [ci, lint]
     priority: P1
-    status: todo
+    status: done
 
 PHASE_H_CI_CD_AGENTS:
   - id: CI-001
