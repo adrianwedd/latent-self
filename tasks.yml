@@ -309,7 +309,7 @@ PHASE_K_AUDIT:
     desc: Extract VideoProcessor, ModelManager, ConfigManager, TelemetryClient; wire through dependency-injection for easier tests.
     tags: [refactor, architecture]
     priority: P1
-    status: todo
+    status: done
 
   - id: AUDIT-005
     title: Formal configuration schema & validation
