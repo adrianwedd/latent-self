@@ -9,6 +9,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from threading import Event, Thread, Lock
 from queue import SimpleQueue
+from typing import Callable, TypeVar, TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover - type checking only
+    from PyQt6.QtCore import pyqtSignal
+    from PyQt6.QtGui import QImage
 
 from directions import Direction
 from time import time
@@ -136,10 +141,14 @@ class ConfigManager:
 # Model loading
 # ---------------------------------------------------------------------------
 
-def _lazy_once(fn):
-    cache: Dict[Any, Any] = {}
 
-    def wrapper(*args, **kwargs):
+T = TypeVar("T")
+
+
+def _lazy_once(fn: Callable[..., T]) -> Callable[..., T]:
+    cache: Dict[Callable[..., T], T] = {}
+
+    def wrapper(*args: Any, **kwargs: Any) -> T:
         if fn not in cache:
             cache[fn] = fn(*args, **kwargs)
         return cache[fn]
