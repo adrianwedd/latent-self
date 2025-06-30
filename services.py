@@ -9,6 +9,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from threading import Event, Thread, Lock
 from queue import SimpleQueue
+
+from directions import Direction
 from time import time
 from typing import Any, Dict
 
@@ -198,9 +200,9 @@ class ModelManager:
 
     def check_orthogonality(self) -> None:
         offs = np.stack([
-            self.latent_dirs["AGE"],
-            self.latent_dirs["GENDER"],
-            self.latent_dirs.get("SMILE", np.zeros_like(self.latent_dirs["AGE"]))
+            self.latent_dirs[Direction.AGE.value],
+            self.latent_dirs[Direction.GENDER.value],
+            self.latent_dirs.get(Direction.SMILE.value, np.zeros_like(self.latent_dirs[Direction.AGE.value]))
         ])
         orth = np.dot(offs, offs.T)
         logging.info("Orthogonality check:\n%s", np.round(orth, 2))
@@ -301,8 +303,8 @@ class VideoProcessor:
         self._processing_thread: Thread | None = None
         self.REENCODE_INTERVAL_S = 10.0
         self._direction_lock = Lock()
-        self.command_queue: SimpleQueue[str] = SimpleQueue()
-        self.active_direction = "BLEND"
+        self.command_queue: SimpleQueue[Direction] = SimpleQueue()
+        self.active_direction = Direction.BLEND
         self._last_affine: np.ndarray | None = None
 
         self._apply_config()
@@ -310,9 +312,9 @@ class VideoProcessor:
     # Configuration from config manager
     def _apply_config(self) -> None:
         self.cycle_seconds = self.config.data["cycle_duration"]
-        self.blend_weights = {k.upper(): v for k, v in self.config.data["blend_weights"].items()}
-        self.max_magnitudes = {k.upper(): v["max_magnitude"] for k, v in self.config.directions_data.items()}
-        self.direction_labels = {k.upper(): v.get("label", k.capitalize()) for k, v in self.config.directions_data.items()}
+        self.blend_weights = {Direction.from_str(k).value: v for k, v in self.config.data["blend_weights"].items()}
+        self.max_magnitudes = {Direction.from_str(k).value: v["max_magnitude"] for k, v in self.config.directions_data.items()}
+        self.direction_labels = {Direction.from_str(k).value: v.get("label", k.capitalize()) for k, v in self.config.directions_data.items()}
         self._hud_values = {k: None for k in self.direction_labels}
         with self.tracker_lock:
             self.tracker.alpha = self.config.data.get("tracker_alpha", 0.4)
@@ -352,17 +354,17 @@ class VideoProcessor:
         with self._direction_lock:
             active = self.active_direction
 
-        if active == "BLEND":
+        if active is Direction.BLEND:
             valid_weights = {k: v for k, v in self.blend_weights.items() if k in self.model_manager.latent_dirs}
             total_weight = sum(valid_weights.values()) or 1.0
             direction = sum((w / total_weight) * self.model_manager.latent_dirs[k] for k, w in valid_weights.items())
             max_mag = 3.0
         else:
-            if active not in self.model_manager.latent_dirs:
-                logging.warning("Direction '%s' not found in latent directions", active)
+            if active.value not in self.model_manager.latent_dirs:
+                logging.warning("Direction '%s' not found in latent directions", active.value)
                 return np.zeros(512), 0.0
-            direction = self.model_manager.latent_dirs[active]
-            max_mag = self.max_magnitudes.get(active, 3.0)
+            direction = self.model_manager.latent_dirs[active.value]
+            max_mag = self.max_magnitudes.get(active.value, 3.0)
 
         current_magnitude = raw_amt * max_mag
         return current_magnitude * direction, current_magnitude
@@ -446,7 +448,8 @@ class VideoProcessor:
                     idle_frames += 1
 
                 with self._direction_lock:
-                    mode_label = self.active_direction
+                    mode = self.active_direction
+                mode_label = self.direction_labels.get(mode.value, mode.value.capitalize())
                 cv2.putText(
                     out_frame,
                     f"Mode: {mode_label.capitalize()} ({current_magnitude:+.1f})",
@@ -473,21 +476,12 @@ class VideoProcessor:
                     if key == ord("q"):
                         self.stop_event.set()
                         break
-                    elif key == ord("y"):
-                        with self._direction_lock:
-                            self.active_direction = "AGE"
-                    elif key == ord("g"):
-                        with self._direction_lock:
-                            self.active_direction = "GENDER"
-                    elif key == ord("h"):
-                        with self._direction_lock:
-                            self.active_direction = "SMILE"
-                    elif key == ord("s"):
-                        with self._direction_lock:
-                            self.active_direction = "SPECIES"
-                    elif key == ord("b"):
-                        with self._direction_lock:
-                            self.active_direction = "BLEND"
+                    else:
+                        ch = chr(key).lower()
+                        direction = Direction.from_key(ch)
+                        if direction:
+                            with self._direction_lock:
+                                self.active_direction = direction
 
                     self._send_mqtt_heartbeat()
         finally:
@@ -511,9 +505,11 @@ class VideoProcessor:
         self.join()
 
     # Direction control -------------------------------------------------
-    def enqueue_direction(self, direction: str) -> None:
+    def enqueue_direction(self, direction: Direction | str) -> None:
         """Request a change of active direction from another thread."""
-        self.command_queue.put(direction.upper())
+        if isinstance(direction, str):
+            direction = Direction.from_str(direction)
+        self.command_queue.put(direction)
 
     def _drain_direction_queue(self) -> None:
         while not self.command_queue.empty():
@@ -521,7 +517,7 @@ class VideoProcessor:
             with self._direction_lock:
                 self.active_direction = new_dir
 
-    def get_active_direction(self) -> str:
+    def get_active_direction(self) -> Direction:
         with self._direction_lock:
             return self.active_direction
 

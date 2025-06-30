@@ -104,7 +104,7 @@ PHASE_F_DOCS_AGENTS:
     desc: Create docs/ with mkdocs.yml using Material theme, navigation stubs for Getting Started, Architecture, Configuration, Deployment, FAQ, and API Reference.
     tags: [docs, mkdocs]
     priority: P1
-    status: todo
+    status: done
 
   - id: DOCS-003
     title: Autogenerate API docstrings
@@ -326,7 +326,7 @@ PHASE_K_AUDIT:
     desc: Implement Direction enum/registry; ensure case-insensitive lookup, presence validation, and single source of hot-key <-> direction mapping.
     tags: [enhancement, model]
     priority: P2
-    status: todo
+    status: done
 
   # ──────────────── Performance & memory ───────────────────────────────────────
   - id: AUDIT-007

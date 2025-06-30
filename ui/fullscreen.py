@@ -5,6 +5,7 @@ from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtWidgets import QLabel, QMainWindow
 
 from .admin import AdminDialog
+from directions import Direction
 
 class MirrorWindow(QMainWindow):
     """A fullscreen, borderless window with a QLabel to display video frames."""
@@ -31,8 +32,10 @@ class MirrorWindow(QMainWindow):
             dialog.exec()
         elif event.key() in (Qt.Key.Key_Q, Qt.Key.Key_Escape):
             self.close()
-        elif event.key() == Qt.Key.Key_S:
-            self.app.video.enqueue_direction("SPECIES")
+        elif event.text():
+            direction = Direction.from_key(event.text())
+            if direction:
+                self.app.video.enqueue_direction(direction)
 
     def show_fullscreen(self) -> None:
         """Show the window in fullscreen mode and hide the cursor."""
