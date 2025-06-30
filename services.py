@@ -100,6 +100,10 @@ class ConfigManager:
         if overrides.fps is not None:
             self.data["fps"] = overrides.fps
 
+        if overrides.max_cpu_mem_mb is not None:
+            self.data["max_cpu_mem_mb"] = overrides.max_cpu_mem_mb
+        if overrides.max_gpu_mem_gb is not None:
+            self.data["max_gpu_mem_gb"] = overrides.max_gpu_mem_gb
         try:
             self.data = AppConfig(**self.data).dict()
         except ValidationError as e:
@@ -207,6 +211,13 @@ class ModelManager:
         orth = np.dot(offs, offs.T)
         logging.info("Orthogonality check:\n%s", np.round(orth, 2))
 
+
+    def unload(self) -> None:
+        """Unload models from memory."""
+        self.G = None
+        self.E = None
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
 # ---------------------------------------------------------------------------
 # Video processing
@@ -571,3 +582,41 @@ class TelemetryClient:
                 self.client.disconnect()
             except Exception as e:
                 logging.warning("MQTT cleanup failed: %s", e)
+
+class MemoryMonitor:
+    """Background memory usage monitor."""
+
+    def __init__(self, config: ConfigManager) -> None:
+        self.interval = config.data.get("memory_check_interval", 10)
+        self.max_cpu_mb = config.data.get("max_cpu_mem_mb")
+        self.max_gpu_gb = config.data.get("max_gpu_mem_gb")
+        self._stop = Event()
+        self._thread: Thread | None = None
+
+    def start(self) -> None:
+        if self.interval <= 0:
+            return
+        self._thread = Thread(target=self._run, daemon=True)
+        self._thread.start()
+
+    def _run(self) -> None:
+        import psutil
+        proc = psutil.Process()
+        while not self._stop.is_set():
+            cpu_mb = proc.memory_info().rss / (1024 * 1024)
+            gpu_gb = 0.0
+            if torch.cuda.is_available():
+                gpu_gb = torch.cuda.memory_allocated() / (1024 ** 3)
+            if self.max_cpu_mb and cpu_mb > self.max_cpu_mb:
+                logging.warning("CPU memory usage %.1f MB exceeds limit %s", cpu_mb, self.max_cpu_mb)
+            if self.max_gpu_gb and gpu_gb > self.max_gpu_gb:
+                logging.warning("GPU memory usage %.2f GB exceeds limit %s", gpu_gb, self.max_gpu_gb)
+            logging.debug("Memory usage: CPU %.1f MB | GPU %.2f GB", cpu_mb, gpu_gb)
+            self._stop.wait(self.interval)
+
+    def stop(self) -> None:
+        if not self._stop.is_set():
+            self._stop.set()
+            if self._thread:
+                self._thread.join()
+

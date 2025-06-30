@@ -26,6 +26,9 @@ class AppConfig(BaseModel):
     admin_password_hash: str = ""
     mqtt: MQTTConfig = Field(default_factory=MQTTConfig)
     idle_seconds: int = 3
+    max_cpu_mem_mb: int | None = None
+    max_gpu_mem_gb: float | None = None
+    memory_check_interval: int = 10
     idle_fade_frames: int | None = None
 
 class DirectionEntry(BaseModel):
@@ -45,3 +48,5 @@ class CLIOverrides(BaseSettings):
     blend_smile: float | None = None
     blend_species: float | None = None
     fps: int | None = None
+    max_cpu_mem_mb: int | None = None
+    max_gpu_mem_gb: float | None = None
