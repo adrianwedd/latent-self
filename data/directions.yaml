@@ -10,3 +10,6 @@ smile:
 species:
   label: Species
   max_magnitude: 3.0
+beauty:
+  label: Beauty
+  max_magnitude: 2.5

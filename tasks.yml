@@ -229,14 +229,14 @@ PHASE_J_ENHANCEMENTS:
       • Update orthogonality checker.
     tags: [model, feature]
     priority: P1
-    status: todo
+    status: done
 
   - id: BEAUTY-002
     title: Bootstrap installer to fetch beauty.npy
     desc: Extend scripts/setup.py MODELS dict to include beauty.npy with checksum and prompt user to install.
     tags: [installer, setup]
     priority: P2
-    status: todo
+    status: done
 
   # ────────────────────────────────────── Facial Expressions ─────────────────────────────────────
   - id: EMOTION-001

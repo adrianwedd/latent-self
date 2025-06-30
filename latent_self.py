@@ -29,7 +29,10 @@ Interactive Controls:
     q       : Quit gracefully
     a       : Morph along the 'Age' axis
     g       : Morph along the 'Gender' axis
+    h       : Morph along the 'Smile' axis
     e       : Morph along the 'Ethnicity' axis
+    s       : Morph along the 'Species' axis
+    u       : Morph along the 'Beauty' axis
     b       : Morph along a blend of all axes (default)
     F12     : (Qt only) Open admin panel
 """
@@ -155,7 +158,10 @@ class LatentSelf:
 
     def _run_cv2(self) -> None:
         """Display output using OpenCV windows."""
-        logging.info("Using cv2 UI. Controls: [q]uit | [y]age | [g]ender | [h]smile | [s]pecies | [b]lend")
+        logging.info(
+            "Using cv2 UI. Controls: [q]uit | [y]age | [g]ender | [h]smile | "
+            "[s]pecies | [u]beauty | [b]lend"
+        )
         self.video.start()
         self.video.join()
 
