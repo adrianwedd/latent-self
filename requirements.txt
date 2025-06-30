@@ -8,4 +8,5 @@ PyQt6
 paho-mqtt
 Werkzeug
 pydantic
+pydantic-settings
 psutil

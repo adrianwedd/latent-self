@@ -14,6 +14,7 @@ Latent Self is an interactive art installation that uses a webcam to capture a u
 *   Fullscreen kiosk mode (`--kiosk`)
 *   Admin panel for on-site configuration
 *   MQTT heartbeat for remote monitoring
+*   Typed configuration via **pydantic-settings**
 
 ## Installation
 
