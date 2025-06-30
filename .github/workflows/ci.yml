@@ -22,7 +22,7 @@ jobs:
       - run: pytest -q
       - run: mkdocs build --strict
       - run: pyinstaller latent_self.spec
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: latent-self-${{ matrix.os }}
           path: dist/
