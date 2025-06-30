@@ -26,6 +26,7 @@ The application is primarily written in Python and leverages the following key l
 - **Mediapipe**: Used for robust face and eye tracking to ensure accurate alignment for morphing.
 - **PyInstaller**: For packaging the application into a standalone executable.
 - **paho-mqtt**: (Optional) For sending heartbeat signals to an MQTT broker for remote monitoring.
+- **pydantic-settings**: For typed configuration management and CLI overrides.
 
 ### Core Components
 

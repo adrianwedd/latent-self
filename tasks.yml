@@ -407,7 +407,7 @@ PHASE_L_REVIEW:
     desc: Include pydantic-settings in requirements.txt and update docs.
     tags: [dependency, config]
     priority: P2
-    status: todo
+    status: done
 
   - id: REVIEW-002
     title: Migrate Pydantic dict() calls
