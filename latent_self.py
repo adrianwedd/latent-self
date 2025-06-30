@@ -104,6 +104,20 @@ class LatentSelf:
         video_processor: VideoProcessor | None = None,
         telemetry: TelemetryClient | None = None,
     ) -> None:
+        """Construct the application core.
+
+        Args:
+            config: Loaded application configuration manager.
+            camera_index: Index of the webcam to use.
+            resolution: Square output resolution.
+            device: Torch device string (``"cpu"`` or ``"cuda"``).
+            weights_dir: Directory containing model weights.
+            ui: UI backend to use.
+            kiosk: Whether to enable fullscreen kiosk mode.
+            model_manager: Optional pre-created :class:`ModelManager`.
+            video_processor: Optional pre-created :class:`VideoProcessor`.
+            telemetry: Optional :class:`TelemetryClient` for metrics.
+        """
         self.config = config
         self.device = torch.device(device)
         self.ui = ui
@@ -115,6 +129,7 @@ class LatentSelf:
         self.memory = MemoryMonitor(config)
 
     def run(self) -> None:
+        """Start the application UI and processing loop."""
         logging.info("Starting Latent Self…")
         self.memory.start()
         try:
@@ -139,11 +154,13 @@ class LatentSelf:
             logging.info("Application shut down gracefully.")
 
     def _run_cv2(self) -> None:
+        """Display output using OpenCV windows."""
         logging.info("Using cv2 UI. Controls: [q]uit | [y]age | [g]ender | [h]smile | [s]pecies | [b]lend")
         self.video.start()
         self.video.join()
 
     def _run_qt(self) -> None:
+        """Launch the Qt based user interface."""
         from PyQt6.QtWidgets import QApplication
         app = QApplication(sys.argv)
         self.window = MirrorWindow(self)
@@ -176,7 +193,12 @@ if QT_AVAILABLE:
 # -------------------------------------------------------------------------------------------------
 
 def _validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
-    """Validate and sanitize CLI arguments."""
+    """Validate and sanitize CLI arguments.
+
+    Args:
+        args: Namespace of parsed CLI values.
+        parser: Argument parser used for reporting errors.
+    """
     if args.camera < 0 or args.camera > 10:
         parser.error("--camera must be between 0 and 10")
     if args.resolution < 64 or args.resolution > 2048:
@@ -198,6 +220,7 @@ def _validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) ->
         parser.error(f"Weights directory does not exist: {args.weights}")
 
 def main(argv: list[str] | None = None) -> None:
+    """Entry point for the command line executable."""
     parser = argparse.ArgumentParser(
         description="Latent Self interactive mirror",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,

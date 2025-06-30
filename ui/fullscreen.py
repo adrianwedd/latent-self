@@ -11,6 +11,7 @@ class MirrorWindow(QMainWindow):
     """A fullscreen, borderless window with a QLabel to display video frames."""
 
     def __init__(self, app) -> None:
+        """Create the window bound to ``app``."""
         super().__init__()
         self.app = app
         self.setWindowTitle("Latent Self")

@@ -111,28 +111,28 @@ PHASE_F_DOCS_AGENTS:
     desc: Insert Google‑style docstrings into all public classes/functions and ensure sphinx‐autodoc compatibility.
     tags: [docs, api, docstrings]
     priority: P1
-    status: todo
+    status: done
 
   - id: DOCS-004
     title: CONTRIBUTING.md template
     desc: Provide contribution guidelines, code style, PR checklist, and issue labels.
     tags: [docs, community]
     priority: P2
-    status: todo
+    status: done
 
   - id: DOCS-005
     title: Add CHANGELOG.md scaffold
     desc: Introduce Keep‑a‑Changelog format and populate 0.4.0 → HEAD history using git log.
     tags: [docs, release]
     priority: P2
-    status: todo
+    status: done
 
   - id: DOCS-006
     title: Docs CI workflow
     desc: Create GitHub Action that builds docs, lints markdown links with lychee, and fails on warnings.
     tags: [ci, docs]
     priority: P1
-    status: todo
+    status: done
 
 PHASE_G_TESTS_AGENTS:
   - id: TEST-001
