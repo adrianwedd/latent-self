@@ -169,14 +169,14 @@ PHASE_H_CI_CD_AGENTS:
     desc: Build, test on macOS‑arm64 and ubuntu‑latest, run mkdocs, bundle PyInstaller artifact.
     tags: [ci, build]
     priority: P1
-    status: todo
+    status: done
 
   - id: CI-002
     title: Systemd service & watchdog
     desc: Draft latent-self.service with auto‑restart and WatchdogSec; include install docs.
     tags: [deployment, systemd]
     priority: P1
-    status: todo
+    status: done
 
 PHASE_I_HOTFIXES:
   - id: HOTFIX-001
