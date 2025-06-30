@@ -368,7 +368,7 @@ PHASE_K_AUDIT:
     desc: Range-check numeric params, sanitize paths, validate camera indices.
     tags: [security, validation]
     priority: P1
-    status: todo
+    status: done
 
   - id: AUDIT-012
     title: Secure MQTT (TLS & auth)
