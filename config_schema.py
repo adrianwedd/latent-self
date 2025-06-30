@@ -46,14 +46,14 @@ class DirectionEntry(BaseModel):
     label: str
     max_magnitude: float = 3.0
 
-class DirectionsConfig(BaseModel):
+class DirectionsConfig(RootModel[Dict[str, DirectionEntry]]):
     """Container for multiple DirectionEntry objects."""
 
-    __root__: Dict[str, DirectionEntry]
+    root: Dict[str, DirectionEntry]
 
     def to_dict(self) -> Dict[str, Dict[str, float | str]]:
         """Return plain dictionary representation."""
-        return {k: v.dict() for k, v in self.__root__.items()}
+        return {k: v.model_dump() for k, v in self.root.items()}
 
 
 class CLIOverrides(BaseSettings):
