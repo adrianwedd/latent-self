@@ -173,6 +173,28 @@ if QT_AVAILABLE:
 # CLI entry-point ---------------------------------------------------------------------------------
 # -------------------------------------------------------------------------------------------------
 
+def _validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+    """Validate and sanitize CLI arguments."""
+    if args.camera < 0 or args.camera > 10:
+        parser.error("--camera must be between 0 and 10")
+    if args.resolution < 64 or args.resolution > 2048:
+        parser.error("--resolution must be between 64 and 2048")
+    if args.fps is not None and not (1 <= args.fps <= 120):
+        parser.error("--fps must be between 1 and 120")
+    if args.cycle_duration is not None and args.cycle_duration <= 0:
+        parser.error("--cycle-duration must be positive")
+    for name in ("blend_age", "blend_gender", "blend_smile", "blend_species"):
+        val = getattr(args, name)
+        if val is not None and not (0.0 <= val <= 1.0):
+            parser.error(f"--{name.replace('_','-')} must be between 0 and 1")
+    if args.max_cpu_mem is not None and args.max_cpu_mem <= 0:
+        parser.error("--max-cpu-mem must be positive")
+    if args.max_gpu_mem is not None and args.max_gpu_mem <= 0:
+        parser.error("--max-gpu-mem must be positive")
+    args.weights = Path(args.weights).expanduser().resolve()
+    if not args.weights.exists():
+        parser.error(f"Weights directory does not exist: {args.weights}")
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         description="Latent Self interactive mirror",
@@ -197,6 +219,8 @@ def main(argv: list[str] | None = None) -> None:
     g.add_argument("--blend-species", type=float, default=None, help="Weight for species in blended mode")
 
     args = parser.parse_args(argv)
+
+    _validate_args(args, parser)
 
     log_level = logging.DEBUG if args.debug else logging.INFO
     configure_logging(args.kiosk, level=log_level)
