@@ -5,14 +5,23 @@ on:
   push:
 
 jobs:
-  typecheck:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-14]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - run: python -m pip install --upgrade pip
-      - run: pip install -r requirements.txt mypy pytest
+      - run: pip install -r requirements.txt mypy pytest mkdocs mkdocs-material pyinstaller
       - run: mypy --install-types --non-interactive .
       - run: pytest -q
+      - run: mkdocs build --strict
+      - run: pyinstaller latent_self.spec
+      - uses: actions/upload-artifact@v3
+        with:
+          name: latent-self-${{ matrix.os }}
+          path: dist/
