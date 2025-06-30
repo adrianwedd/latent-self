@@ -160,7 +160,7 @@ class LatentSelf:
         """Display output using OpenCV windows."""
         logging.info(
             "Using cv2 UI. Controls: [q]uit | [y]age | [g]ender | [h]smile | "
-            "[s]pecies | [u]beauty | [b]lend"
+            "[s]pecies | [u]beauty | [1]happy | [2]angry | [3]sad | [4]fear | [5]disgust | [6]surprise | [b]blend"
         )
         self.video.start()
         self.video.join()
