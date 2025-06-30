@@ -16,6 +16,7 @@ if TYPE_CHECKING:  # pragma: no cover - type checking only
     from PyQt6.QtGui import QImage
 
 from directions import Direction
+from logging_setup import log_timing
 from time import time
 from typing import Any, Dict
 
@@ -343,29 +344,31 @@ class VideoProcessor:
     # Core latent helpers
     # ------------------------------------------------------------------
     def encode_face(self, frame: np.ndarray) -> torch.Tensor:
-        with self.tracker_lock:
-            eyes = self.tracker.get_eyes(frame)
-        if eyes is None:
-            crop = cv2.resize(frame, (256, 256))
-            M = None
-        else:
-            le, re = eyes
-            M = cv2.getAffineTransform(np.array([le, re], dtype=np.float32), self._canonical)
-            crop = cv2.warpAffine(frame, M, (256, 256))
-        latent, _ = self.model_manager.E(_to_tensor(crop).to(self.device), return_latents=True)
-        self._last_affine = M
-        return latent
+        with log_timing("encode_face"):
+            with self.tracker_lock:
+                eyes = self.tracker.get_eyes(frame)
+            if eyes is None:
+                crop = cv2.resize(frame, (256, 256))
+                M = None
+            else:
+                le, re = eyes
+                M = cv2.getAffineTransform(np.array([le, re], dtype=np.float32), self._canonical)
+                crop = cv2.warpAffine(frame, M, (256, 256))
+            latent, _ = self.model_manager.E(_to_tensor(crop).to(self.device), return_latents=True)
+            self._last_affine = M
+            return latent
 
     def decode_latent(self, latent_w_plus: torch.Tensor, target_shape: tuple[int, int]) -> np.ndarray:
-        with torch.no_grad():
-            img_out, _, _ = self.model_manager.G.synthesis(latent_w_plus, noise_mode="const")
-        out = _to_numpy(img_out)
-        if self._last_affine is not None:
-            H, W = target_shape
-            inv = cv2.invertAffineTransform(self._last_affine)
-            out_full = cv2.warpAffine(out, inv, (W, H), flags=cv2.WARP_INVERSE_MAP)
-            return out_full
-        return cv2.resize(out, target_shape[::-1])
+        with log_timing("decode_latent"):
+            with torch.no_grad():
+                img_out, _, _ = self.model_manager.G.synthesis(latent_w_plus, noise_mode="const")
+            out = _to_numpy(img_out)
+            if self._last_affine is not None:
+                H, W = target_shape
+                inv = cv2.invertAffineTransform(self._last_affine)
+                out_full = cv2.warpAffine(out, inv, (W, H), flags=cv2.WARP_INVERSE_MAP)
+                return out_full
+            return cv2.resize(out, target_shape[::-1])
 
     def latent_offset(self, t: float) -> tuple[np.ndarray, float]:
         phase = (t % self.cycle_seconds) / self.cycle_seconds

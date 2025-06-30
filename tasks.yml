@@ -360,7 +360,7 @@ PHASE_K_AUDIT:
       • Standardise log levels; separate debug vs user info; add timing metrics.
     tags: [quality, logging]
     priority: P3
-    status: todo
+    status: done
 
   # ──────────────── Validation & security ──────────────────────────────────────
   - id: AUDIT-011

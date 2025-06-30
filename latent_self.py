@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+from logging_setup import configure_logging
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -186,6 +187,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--weights", type=Path, default=asset_path("models"), help="Directory for model weights")
     parser.add_argument("--ui", type=str, default="cv2", choices=["cv2", "qt"], help="UI backend to use")
     parser.add_argument("--kiosk", action="store_true", help="Hide cursor and launch fullscreen (Qt only)")
+    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
 
     g = parser.add_argument_group("Morphing Controls (overrides config)")
     g.add_argument("--cycle-duration", type=float, default=None, help="Duration of one morph cycle (seconds)")
@@ -196,7 +198,8 @@ def main(argv: list[str] | None = None) -> None:
 
     args = parser.parse_args(argv)
 
-    logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
+    log_level = logging.DEBUG if args.debug else logging.INFO
+    configure_logging(args.kiosk, level=log_level)
 
     config = ConfigManager(args)
 
