@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, BaseSettings, Field
+from pydantic import BaseModel, Field, RootModel
+from pydantic_settings import BaseSettings
 from typing import Dict
 
 class BlendWeights(BaseModel):
@@ -53,6 +54,7 @@ class DirectionsConfig(BaseModel):
     def to_dict(self) -> Dict[str, Dict[str, float | str]]:
         """Return plain dictionary representation."""
         return {k: v.dict() for k, v in self.__root__.items()}
+
 
 class CLIOverrides(BaseSettings):
     """Command-line arguments mapped to config values."""
