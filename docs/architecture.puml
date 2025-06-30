@@ -1,0 +1,23 @@
+@startuml
+!define AWSPUML https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/v14.0/LATEST/AWSPUML
+skinparam backgroundColor transparent
+
+actor User
+component "LatentSelf" as LS {
+  component ConfigManager
+  component ModelManager
+  component VideoProcessor
+  component TelemetryClient
+  component MemoryMonitor
+  component UI
+}
+
+User --> UI
+UI --> LS
+LS --> ConfigManager
+LS --> ModelManager
+LS --> VideoProcessor
+LS --> TelemetryClient
+LS --> MemoryMonitor
+VideoProcessor --> ModelManager
+@enduml

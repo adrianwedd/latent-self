@@ -34,6 +34,14 @@ The application is primarily written in Python and leverages the following key l
 - `ui/fullscreen.py`: Implements the main mirror display window.
 - `ui/admin.py`: Provides an administrative interface for adjusting application parameters.
 
+### Diagram
+
+The following PlantUML diagram illustrates the high-level architecture:
+
+```plantuml
+!include docs/architecture.puml
+```
+
 ## Configuration
 
 Default configuration settings are located in `data/config.yaml`. On the first run, this file is copied to a user-specific configuration directory (e.g., `~/.latent_self/config.yaml` on Linux/macOS, or `C:\Users\<User>\AppData\Local\LatentSelf\LatentSelf\config.yaml` on Windows).

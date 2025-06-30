@@ -63,6 +63,7 @@ except ImportError as exc:  # pragma: no cover - runtime fail hard
 
 @dataclass
 class DirectionUI:
+    """Helper structure binding a UI slider and label to a direction."""
     name: str
     slider: "QSlider"
     label: "QLabel"
@@ -89,6 +90,7 @@ except ImportError:
 
 
 class LatentSelf:
+    """Orchestrates models, video processing and UI components."""
     def __init__(
         self,
         config: ConfigManager,

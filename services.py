@@ -1,4 +1,5 @@
-# Service classes for Latent Self
+"""Supporting service classes used by the main application logic."""
+
 from __future__ import annotations
 
 import argparse
@@ -147,6 +148,8 @@ T = TypeVar("T")
 
 
 def _lazy_once(fn: Callable[..., T]) -> Callable[..., T]:
+    """Cache function results and return the same value on subsequent calls."""
+
     cache: Dict[Callable[..., T], T] = {}
 
     def wrapper(*args: Any, **kwargs: Any) -> T:
@@ -159,6 +162,7 @@ def _lazy_once(fn: Callable[..., T]) -> Callable[..., T]:
 
 @_lazy_once
 def get_stylegan_generator(weights_dir: Path):
+    """Load the StyleGAN generator weights once and cache the instance."""
     import pickle  # noqa: WPS433 - model loading
 
     gen_path = weights_dir / "ffhq-1024-stylegan2.pkl"
@@ -173,6 +177,7 @@ def get_stylegan_generator(weights_dir: Path):
 
 @_lazy_once
 def get_e4e_encoder(weights_dir: Path):
+    """Load the e4e encoder weights once and cache the instance."""
     try:
         from models.encoders import pSp  # imported late
     except ModuleNotFoundError:
@@ -193,6 +198,7 @@ def get_e4e_encoder(weights_dir: Path):
 
 @_lazy_once
 def get_latent_directions(weights_dir: Path) -> Dict[str, np.ndarray]:
+    """Load latent direction vectors from disk."""
     path = weights_dir / "latent_directions.npz"
     if not path.exists():
         logging.error("Latent directions file not found at %s", path)
@@ -213,6 +219,8 @@ class ModelManager:
         self.latent_dirs = get_latent_directions(weights_dir)
 
     def check_orthogonality(self) -> None:
+        """Log dot products of key latent directions for debugging."""
+
         offs = np.stack([
             self.latent_dirs[Direction.AGE.value],
             self.latent_dirs[Direction.GENDER.value],
@@ -274,18 +282,24 @@ class _EyeTracker:
 
 
 def _to_tensor(img: np.ndarray) -> torch.Tensor:
+    """Convert a BGR image ``ndarray`` to a normalized PyTorch tensor."""
+
     img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     tensor = torch.from_numpy(img_rgb).permute(2, 0, 1).float() / 127.5 - 1.0
     return tensor.unsqueeze(0)
 
 
 def _to_numpy(tensor: torch.Tensor) -> np.ndarray:
+    """Convert a normalized tensor back to a BGR image."""
+
     tensor = (tensor.squeeze(0).clamp(-1, 1) + 1.0) * 127.5
     img_rgb = tensor.permute(1, 2, 0).cpu().numpy().astype(np.uint8)
     return cv2.cvtColor(img_rgb, cv2.COLOR_RGB2BGR)
 
 
 def _numpy_to_qimage(img: np.ndarray) -> "QImage":
+    """Convert a ``numpy`` image to a ``QImage`` for Qt display."""
+
     from PyQt6.QtGui import QImage
 
     h, w, ch = img.shape
@@ -344,6 +358,7 @@ class VideoProcessor:
     # Core latent helpers
     # ------------------------------------------------------------------
     def encode_face(self, frame: np.ndarray) -> torch.Tensor:
+        """Encode the current frame into latent ``w+`` space."""
         with log_timing("encode_face"):
             with self.tracker_lock:
                 eyes = self.tracker.get_eyes(frame)
@@ -359,6 +374,8 @@ class VideoProcessor:
             return latent
 
     def decode_latent(self, latent_w_plus: torch.Tensor, target_shape: tuple[int, int]) -> np.ndarray:
+        """Decode a latent tensor back into an image matching ``target_shape``."""
+
         with log_timing("decode_latent"):
             with torch.no_grad():
                 img_out, _, _ = self.model_manager.G.synthesis(latent_w_plus, noise_mode="const")
@@ -371,6 +388,8 @@ class VideoProcessor:
             return cv2.resize(out, target_shape[::-1])
 
     def latent_offset(self, t: float) -> tuple[np.ndarray, float]:
+        """Compute the latent direction offset at time ``t``."""
+
         phase = (t % self.cycle_seconds) / self.cycle_seconds
         raw_amt = 1.0 - abs(phase * 2.0 - 1.0)
 
@@ -397,6 +416,8 @@ class VideoProcessor:
             self.telemetry.send_heartbeat()
 
     def _process_stream(self, frame_emitter: "pyqtSignal" | None = None) -> None:
+        """Main loop reading camera frames and emitting processed output."""
+
         from PyQt6.QtCore import QThread
 
         self.cap = cv2.VideoCapture(self.camera_index)
@@ -541,6 +562,7 @@ class VideoProcessor:
                 self.active_direction = new_dir
 
     def get_active_direction(self) -> Direction:
+        """Return the currently active morphing direction."""
         with self._direction_lock:
             return self.active_direction
 
@@ -578,6 +600,8 @@ class TelemetryClient:
         self._last_ts = 0.0
 
     def send_heartbeat(self) -> None:
+        """Publish a heartbeat message if the interval has elapsed."""
+
         if self.client and (time() - self._last_ts) > self.interval:
             try:
                 payload = {"timestamp": time(), "status": "alive"}
@@ -588,6 +612,8 @@ class TelemetryClient:
                 logging.warning("MQTT: Failed to send heartbeat - %s", e)
 
     def shutdown(self) -> None:
+        """Disconnect cleanly from the MQTT broker."""
+
         if self.client:
             try:
                 self.client.loop_stop()
@@ -606,12 +632,16 @@ class MemoryMonitor:
         self._thread: Thread | None = None
 
     def start(self) -> None:
+        """Start background monitoring if enabled."""
+
         if self.interval <= 0:
             return
         self._thread = Thread(target=self._run, daemon=True)
         self._thread.start()
 
     def _run(self) -> None:
+        """Periodically log memory usage statistics."""
+
         import psutil
         proc = psutil.Process()
         while not self._stop.is_set():
@@ -627,6 +657,8 @@ class MemoryMonitor:
             self._stop.wait(self.interval)
 
     def stop(self) -> None:
+        """Stop the monitoring thread."""
+
         if not self._stop.is_set():
             self._stop.set()
             if self._thread:

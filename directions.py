@@ -1,3 +1,5 @@
+"""Registry of supported latent directions and hotkeys."""
+
 from __future__ import annotations
 
 from enum import Enum
@@ -15,6 +17,8 @@ class Direction(str, Enum):
 
     @classmethod
     def from_str(cls, name: str) -> "Direction":
+        """Look up a direction by name (case-insensitive)."""
+
         try:
             return cls[name.upper()]
         except KeyError as exc:
@@ -22,10 +26,14 @@ class Direction(str, Enum):
 
     @classmethod
     def from_key(cls, key: str) -> Optional["Direction"]:
+        """Return the direction bound to a keyboard shortcut."""
+
         return HOTKEYS.get(key.lower())
 
     @classmethod
     def key(cls, direction: "Direction") -> str:
+        """Return the hotkey associated with ``direction``."""
+
         for k, v in HOTKEYS.items():
             if v is direction:
                 return k
