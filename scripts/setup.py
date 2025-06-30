@@ -75,6 +75,10 @@ MODELS_META = {
          "748f4cb01604d2db53f141fa10542d91c44f7b98b713c2b49c375ddfac3f4efd"),
     "latent_directions.npz":
         ("https://raw.githubusercontent.com/genforce/interfacegan/master/boundaries/latent_directions_ffhq.npz", None),
+    "beauty.npy": (
+        "https://raw.githubusercontent.com/generators-with-stylegan2/master/ffhq/beauty.npy",
+        "87e923ffae6a4c0fdddac29ae7d08d2523f2e12db46843e5b32bb52a0cb57f46",
+    ),
 }
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -207,6 +211,9 @@ def main():
     # Optional extras
     if args.yes or console.input("Install Qt GUI support? ([y]/n) ").strip().lower() in ("","y"):
         pip_install(OPTIONAL["qt"])
+
+    if not (args.yes or console.input("Download Beauty latent direction? ([y]/n) ").strip().lower() in ("", "y")):
+        MODELS_META.pop("beauty.npy", None)
 
     download_models()
     copy_default_configs()

@@ -213,7 +213,17 @@ def get_latent_directions(weights_dir: Path) -> Dict[str, np.ndarray]:
         sys.exit(1)
     logging.info("Loading latent directions from %s", path)
     with np.load(path) as data:
-        return {k.upper(): data[k] for k in data.keys()}
+        dirs = {k.upper(): data[k] for k in data.keys()}
+
+    beauty_path = weights_dir / "beauty.npy"
+    if beauty_path.exists():
+        logging.info("Loading Beauty direction from %s", beauty_path)
+        vec = np.load(beauty_path)
+        norm = np.linalg.norm(vec)
+        if norm:
+            dirs[Direction.BEAUTY.value] = vec / norm
+
+    return dirs
 
 
 class ModelManager:
@@ -238,7 +248,14 @@ class ModelManager:
         offs = np.stack([
             self.latent_dirs[Direction.AGE.value],
             self.latent_dirs[Direction.GENDER.value],
-            self.latent_dirs.get(Direction.SMILE.value, np.zeros_like(self.latent_dirs[Direction.AGE.value]))
+            self.latent_dirs.get(
+                Direction.SMILE.value,
+                np.zeros_like(self.latent_dirs[Direction.AGE.value]),
+            ),
+            self.latent_dirs.get(
+                Direction.BEAUTY.value,
+                np.zeros_like(self.latent_dirs[Direction.AGE.value]),
+            ),
         ])
         orth = np.dot(offs, offs.T)
         logging.info("Orthogonality check:\n%s", np.round(orth, 2))
