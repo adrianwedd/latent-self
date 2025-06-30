@@ -7,3 +7,4 @@ PyYAML
 PyQt6
 paho-mqtt
 Werkzeug
+pydantic
