@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, BaseSettings, Field
+from pydantic import BaseModel, Field, RootModel
+from pydantic_settings import BaseSettings
 from typing import Dict
 
 class BlendWeights(BaseModel):
@@ -35,11 +36,11 @@ class DirectionEntry(BaseModel):
     label: str
     max_magnitude: float = 3.0
 
-class DirectionsConfig(BaseModel):
-    __root__: Dict[str, DirectionEntry]
+class DirectionsConfig(RootModel[Dict[str, DirectionEntry]]):
+    root: Dict[str, DirectionEntry]
 
     def to_dict(self) -> Dict[str, Dict[str, float | str]]:
-        return {k: v.dict() for k, v in self.__root__.items()}
+        return {k: v.model_dump() for k, v in self.root.items()}
 
 class CLIOverrides(BaseSettings):
     cycle_duration: float | None = None
