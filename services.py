@@ -41,6 +41,7 @@ try:
     import paho.mqtt.client as mqtt
     MQTT_AVAILABLE = True
 except ImportError:  # pragma: no cover - optional feature
+    mqtt = None
     MQTT_AVAILABLE = False
 
 
