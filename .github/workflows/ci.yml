@@ -16,7 +16,8 @@ jobs:
         with:
           python-version: '3.11'
       - run: python -m pip install --upgrade pip
-      - run: pip install -r requirements.txt mypy pytest mkdocs mkdocs-material pyinstaller
+      - run: pip install -r requirements.txt mypy pytest ruff mkdocs mkdocs-material pyinstaller
+      - run: ruff .
       - run: mypy --install-types --non-interactive .
       - run: pytest -q
       - run: mkdocs build --strict
