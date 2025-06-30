@@ -12,6 +12,9 @@ from queue import SimpleQueue
 from time import time
 from typing import Any, Dict
 
+from pydantic import ValidationError
+from config_schema import AppConfig, CLIOverrides, DirectionsConfig
+
 import appdirs
 import cv2
 import numpy as np
@@ -79,24 +82,45 @@ class ConfigManager:
             logging.info(f"Created default directions at {self.directions_path}")
 
     def _override_with_cli(self, args: argparse.Namespace) -> None:
-        if args.cycle_duration is not None:
-            self.data["cycle_duration"] = args.cycle_duration
-        if args.blend_age is not None:
-            self.data.setdefault("blend_weights", {})["age"] = args.blend_age
-        if args.blend_gender is not None:
-            self.data.setdefault("blend_weights", {})["gender"] = args.blend_gender
-        if args.blend_smile is not None:
-            self.data.setdefault("blend_weights", {})["smile"] = args.blend_smile
-        if args.blend_species is not None:
-            self.data.setdefault("blend_weights", {})["species"] = args.blend_species
-        if args.fps is not None:
-            self.data["fps"] = args.fps
+        """Merge CLI overrides using the CLIOverrides model."""
+        overrides = CLIOverrides(**vars(args))
+
+        if overrides.cycle_duration is not None:
+            self.data["cycle_duration"] = overrides.cycle_duration
+        if overrides.blend_age is not None:
+            self.data.setdefault("blend_weights", {})["age"] = overrides.blend_age
+        if overrides.blend_gender is not None:
+            self.data.setdefault("blend_weights", {})["gender"] = overrides.blend_gender
+        if overrides.blend_smile is not None:
+            self.data.setdefault("blend_weights", {})["smile"] = overrides.blend_smile
+        if overrides.blend_species is not None:
+            self.data.setdefault("blend_weights", {})["species"] = overrides.blend_species
+        if overrides.fps is not None:
+            self.data["fps"] = overrides.fps
+
+        try:
+            self.data = AppConfig(**self.data).dict()
+        except ValidationError as e:
+            raise RuntimeError(f"Invalid configuration after CLI overrides: {e}")
 
     def reload(self) -> None:
-        with self.config_path.open("r") as f:
-            self.data = yaml.safe_load(f)
-        with self.directions_path.open("r") as f:
-            self.directions_data = yaml.safe_load(f)
+        """Reload configuration files with validation."""
+        try:
+            with self.config_path.open("r") as f:
+                raw_cfg = yaml.safe_load(f) or {}
+            cfg = AppConfig(**raw_cfg)
+            self.data = cfg.dict()
+        except (yaml.YAMLError, ValidationError) as e:
+            raise RuntimeError(f"Invalid config.yaml: {e}")
+
+        try:
+            with self.directions_path.open("r") as f:
+                raw_dir = yaml.safe_load(f) or {}
+            dirs = DirectionsConfig(__root__=raw_dir)
+            self.directions_data = dirs.to_dict()
+        except (yaml.YAMLError, ValidationError) as e:
+            raise RuntimeError(f"Invalid directions.yaml: {e}")
+
         logging.info("Configuration reloaded.")
         if self.app:
             self.app._apply_config()

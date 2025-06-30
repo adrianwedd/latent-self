@@ -319,7 +319,7 @@ PHASE_K_AUDIT:
       • CLI overrides merged via pydantic BaseSettings (or similar).
     tags: [enhancement, config]
     priority: P1
-    status: todo
+    status: done
 
   - id: AUDIT-006
     title: Centralised latent-direction registry
