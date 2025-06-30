@@ -14,6 +14,12 @@ class Direction(str, Enum):
     ETHNICITY = "ETHNICITY"
     SPECIES = "SPECIES"
     BEAUTY = "BEAUTY"
+    HAPPY = "HAPPY"
+    ANGRY = "ANGRY"
+    SAD = "SAD"
+    FEAR = "FEAR"
+    DISGUST = "DISGUST"
+    SURPRISE = "SURPRISE"
     BLEND = "BLEND"
 
     @classmethod
@@ -48,5 +54,11 @@ HOTKEYS: dict[str, Direction] = {
     "e": Direction.ETHNICITY,
     "s": Direction.SPECIES,
     "u": Direction.BEAUTY,
+    "1": Direction.HAPPY,
+    "2": Direction.ANGRY,
+    "3": Direction.SAD,
+    "4": Direction.FEAR,
+    "5": Direction.DISGUST,
+    "6": Direction.SURPRISE,
     "b": Direction.BLEND,
 }

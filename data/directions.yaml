@@ -13,3 +13,21 @@ species:
 beauty:
   label: Beauty
   max_magnitude: 2.5
+happy:
+  label: Happy
+  max_magnitude: 3.0
+angry:
+  label: Angry
+  max_magnitude: 3.0
+sad:
+  label: Sad
+  max_magnitude: 3.0
+fear:
+  label: Fear
+  max_magnitude: 3.0
+disgust:
+  label: Disgust
+  max_magnitude: 3.0
+surprise:
+  label: Surprise
+  max_magnitude: 3.0
