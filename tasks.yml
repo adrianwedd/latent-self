@@ -400,3 +400,32 @@ PHASE_K_AUDIT:
     tags: [docs]
     priority: P3
     status: done
+
+PHASE_L_REVIEW:
+  - id: REVIEW-001
+    title: Add pydantic-settings dependency
+    desc: Include pydantic-settings in requirements.txt and update docs.
+    tags: [dependency, config]
+    priority: P2
+    status: todo
+
+  - id: REVIEW-002
+    title: Migrate Pydantic dict() calls
+    desc: Replace deprecated .dict() usages with .model_dump() in services.py.
+    tags: [refactor, pydantic]
+    priority: P3
+    status: todo
+
+  - id: REVIEW-003
+    title: Fix truncated README usage section
+    desc: Complete the README instructions and remove stray lines.
+    tags: [docs]
+    priority: P3
+    status: todo
+
+  - id: REVIEW-004
+    title: Document test environment setup
+    desc: Explain installing dependencies and running pytest in CONTRIBUTING.md.
+    tags: [docs, tests]
+    priority: P3
+    status: todo
