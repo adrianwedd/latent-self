@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import ClassVar, Optional
 
 class Direction(str, Enum):
     """Known latent directions."""
@@ -12,15 +13,6 @@ class Direction(str, Enum):
     SPECIES = "SPECIES"
     BLEND = "BLEND"
 
-    _HOTKEYS = {
-        "y": AGE,
-        "g": GENDER,
-        "h": SMILE,
-        "e": ETHNICITY,
-        "s": SPECIES,
-        "b": BLEND,
-    }
-
     @classmethod
     def from_str(cls, name: str) -> "Direction":
         try:
@@ -29,12 +21,22 @@ class Direction(str, Enum):
             raise ValueError(f"Unknown direction: {name}") from exc
 
     @classmethod
-    def from_key(cls, key: str) -> "Direction | None":
-        return cls._HOTKEYS.get(key.lower())
+    def from_key(cls, key: str) -> Optional["Direction"]:
+        return HOTKEYS.get(key.lower())
 
     @classmethod
     def key(cls, direction: "Direction") -> str:
-        for k, v in cls._HOTKEYS.items():
+        for k, v in HOTKEYS.items():
             if v is direction:
                 return k
         raise ValueError(f"No hotkey for {direction}")
+
+
+HOTKEYS: dict[str, Direction] = {
+    "y": Direction.AGE,
+    "g": Direction.GENDER,
+    "h": Direction.SMILE,
+    "e": Direction.ETHNICITY,
+    "s": Direction.SPECIES,
+    "b": Direction.BLEND,
+}
