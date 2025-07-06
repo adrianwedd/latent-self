@@ -15,9 +15,9 @@ active_emotion: HAPPY
 # -- Performance --
 fps: 15  # Target frames per second
 tracker_alpha: 0.4  # Smoothing factor for eye tracking (0.0 - 1.0)
-eye_canonical:
-  - [80.0, 100.0]
-  - [176.0, 100.0]
+eye_tracker:
+  left_eye: [80.0, 100.0]
+  right_eye: [176.0, 100.0]
 max_cpu_mem_mb:
 max_gpu_mem_gb:
 memory_check_interval: 10

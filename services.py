@@ -412,9 +412,14 @@ class VideoProcessor:
         self.cap: cv2.VideoCapture | None = None
         self.camera_available = False
 
+        eye_cfg = self.config.data.get("eye_tracker", {})
+        canonical = [
+            eye_cfg.get("left_eye", [80.0, 100.0]),
+            eye_cfg.get("right_eye", [176.0, 100.0]),
+        ]
         self.tracker = _EyeTracker(
             alpha=self.config.data.get("tracker_alpha", 0.4),
-            canonical=self.config.data.get("eye_canonical", [[80.0, 100.0], [176.0, 100.0]]),
+            canonical=canonical,
         )
         self.tracker_lock = Lock()
         self.stop_event = Event()
@@ -441,10 +446,12 @@ class VideoProcessor:
         self._hud_values = {k: None for k in self.direction_labels}
         with self.tracker_lock:
             self.tracker.alpha = self.config.data.get("tracker_alpha", 0.4)
-            self.tracker.canonical = np.array(
-                self.config.data.get("eye_canonical", [[80.0, 100.0], [176.0, 100.0]]),
-                dtype=np.float32,
-            )
+            eye_cfg = self.config.data.get("eye_tracker", {})
+            canonical = [
+                eye_cfg.get("left_eye", [80.0, 100.0]),
+                eye_cfg.get("right_eye", [176.0, 100.0]),
+            ]
+            self.tracker.canonical = np.array(canonical, dtype=np.float32)
         self.target_fps = self.config.data.get("fps", 15)
         emotion = self.config.data.get("active_emotion")
         if emotion:
