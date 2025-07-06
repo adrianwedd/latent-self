@@ -53,7 +53,7 @@ PHASE_D_POLISH:
     desc: Launch the app using prerecorded media or static images if no webcam is available — useful for headless or CI environments.
     tags: [debugging, robustness]
     priority: P3
-    status: optional
+    status: done
 
   - id: POLISH-009
     title: Validate all sliders in admin.py are working and write back to config

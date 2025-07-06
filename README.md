@@ -15,6 +15,7 @@ Latent Self is an interactive art installation that uses a webcam to capture a u
 *   Admin panel for on-site configuration
 *   MQTT heartbeat for remote monitoring
 *   Typed configuration via **pydantic-settings**
+*   Demo mode with prerecorded media (`--demo`)
 
 ## Installation
 
@@ -54,11 +55,15 @@ Copy the printed hash into your `config.yaml` under the
 ```bash
 python latent_self.py
 python latent_self.py --ui qt --kiosk  # Qt fullscreen
+python latent_self.py --demo           # Use prerecorded media
 ```
 
 ## Demo
 
 ![Demo GIF](https://via.placeholder.com/600x400.gif?text=Demo+GIF+Placeholder)
+
+To try the application without a webcam, place a `demo.mp4` file or a folder of
+images inside the `data/` directory and run with `--demo`.
 
 For additional options run:
 
