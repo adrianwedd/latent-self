@@ -506,25 +506,24 @@ class VideoProcessor:
             return cv2.resize(out, target_shape[::-1])
 
     def latent_offset(self, t: float) -> tuple[np.ndarray, float]:
-        """Compute the latent direction offset and magnitude for a timestamp.
+        """Compute the current morphing direction and magnitude.
 
-        Args:
-            t: Absolute time in seconds used to calculate the current phase of
-                the morphing cycle. ``cycle_seconds`` controls the period of the
-                waveform.
+        ``t`` is compared against :attr:`cycle_seconds`—the morph period loaded
+        from configuration—to obtain a normalised phase in ``[0, 1)``. The
+        expression ``1 - abs(phase * 2 - 1)`` then converts this phase into a
+        triangular waveform. ``raw_amt`` therefore rises from ``0`` to ``1``
+        midway through the cycle and falls back to ``0`` by the end.
+
+        When :attr:`active_direction` is :class:`~Direction.BLEND`, the method
+        normalises ``blend_weights`` and mixes all available latent directions in
+        ``model_manager.latent_dirs``. Otherwise the single active direction is
+        used. The resulting unit vector is scaled by ``max_magnitudes`` for that
+        direction.
 
         Returns:
-            tuple[np.ndarray, float]: A tuple containing the scaled direction
-            vector and its magnitude. The vector has the same dimensionality as
-            the model's latent space and is scaled by the computed magnitude.
-
-        Blend Mode Calculation:
-            When ``active_direction`` is :class:`Direction.BLEND`, each
-            direction in ``blend_weights`` is weighted and normalised before
-            being combined into a single vector. Only weights for directions
-            present in ``model_manager.latent_dirs`` are used. The magnitude is
-            based on ``max_magnitudes`` for the active direction (default
-            ``3.0``).
+            Tuple ``(offset, magnitude)`` where ``offset`` is the scaled latent
+            direction vector to add to the baseline latent and ``magnitude`` is
+            the scalar strength used for the scaling.
 
         Example:
             >>> vp = VideoProcessor(...)
