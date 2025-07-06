@@ -12,6 +12,7 @@ This document provides detailed information about the Latent Self application, i
   - [Customizing the UI](#customizing-the-ui)
 - [Troubleshooting](#troubleshooting)
 
+- [User Manual](docs/user_manual.md)
 ## Project Overview
 
 Latent Self is an interactive art installation that uses real-time face morphing. It captures a user's face via webcam and applies transformations based on pre-trained StyleGAN and e4e models. The transformed image is displayed, creating a dynamic "altered reflection."
@@ -91,3 +92,5 @@ To add a new morphing direction (e.g., "happiness"), follow these steps:
 - **Model Loading Errors**: Verify that all required model weights (`.pkl`, `.pt`, `.npz`) are present in the `models/` directory and are not corrupted.
 - **PyQt6 Issues**: If the Qt UI fails to launch, ensure PyQt6 is correctly installed (`pip install PyQt6`).
 - **Performance Issues**: Real-time performance is heavily dependent on GPU availability. Ensure CUDA is properly configured if you intend to use it (`--cuda` flag).
+
+For step-by-step setup see the [User Manual](docs/user_manual.md).
