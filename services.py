@@ -682,17 +682,42 @@ class VideoProcessor:
         else:
             self._skip_next = True
 
+    def _get_frame(self) -> tuple[bool, np.ndarray | None]:
+        """Read the next frame from camera or demo media."""
+
+        if self.demo_frames:
+            frame = cv2.imread(str(self.demo_frames[self._demo_index]))
+            self._demo_index = (self._demo_index + 1) % len(self.demo_frames)
+            return frame is not None, frame
+
+        if self.cap is None:
+            return False, None
+        ret, frame = self.cap.read()
+        if self.demo and not ret:
+            self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            ret, frame = self.cap.read()
+        return ret, frame
+
+    def _open_camera(self) -> None:
+        """Initialize the camera capture device."""
+
+        self.cap = cv2.VideoCapture(self.camera_index)
+        self.camera_available = self.cap.isOpened()
+        if self.camera_available:
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.resolution)
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.resolution)
+        else:
+            logging.error("Failed to open camera at index %s", self.camera_index)
+
     def _process_stream(self, frame_emitter: "pyqtSignal" | None = None) -> None:
-        """Main loop reading camera frames and emitting processed output."""
+        """Main loop orchestrating capture, processing and display.
+
+        This loop delegates camera retries, frame processing and UI drawing to
+        helper methods to keep the flow readable.
+        """
 
         if not self.demo_frames:
-            self.cap = cv2.VideoCapture(self.camera_index)
-            self.camera_available = self.cap.isOpened()
-            if self.camera_available:
-                self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.resolution)
-                self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.resolution)
-            else:
-                logging.error("Failed to open camera at index %s", self.camera_index)
+            self._open_camera()
         else:
             self.cap = None
             self.camera_available = True
@@ -729,15 +754,7 @@ class VideoProcessor:
                     retry_delay = self._handle_camera_error(frame_emitter, retry_delay, max_delay)
                     continue
 
-                if self.demo_frames:
-                    frame = cv2.imread(str(self.demo_frames[self._demo_index]))
-                    self._demo_index = (self._demo_index + 1) % len(self.demo_frames)
-                    ret = frame is not None
-                else:
-                    ret, frame = self.cap.read()
-                    if self.demo and not ret:
-                        self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                        ret, frame = self.cap.read()
+                ret, frame = self._get_frame()
                 if not ret:
                     logging.error("Camera read failed – retrying")
                     self.camera_available = False
