@@ -453,7 +453,31 @@ class VideoProcessor:
             return cv2.resize(out, target_shape[::-1])
 
     def latent_offset(self, t: float) -> tuple[np.ndarray, float]:
-        """Compute the latent direction offset at time ``t``."""
+        """Compute the latent direction offset and magnitude for a timestamp.
+
+        Args:
+            t: Absolute time in seconds used to calculate the current phase of
+                the morphing cycle. ``cycle_seconds`` controls the period of the
+                waveform.
+
+        Returns:
+            tuple[np.ndarray, float]: A tuple containing the scaled direction
+            vector and its magnitude. The vector has the same dimensionality as
+            the model's latent space and is scaled by the computed magnitude.
+
+        Blend Mode Calculation:
+            When ``active_direction`` is :class:`Direction.BLEND`, each
+            direction in ``blend_weights`` is weighted and normalised before
+            being combined into a single vector. Only weights for directions
+            present in ``model_manager.latent_dirs`` are used. The magnitude is
+            based on ``max_magnitudes`` for the active direction (default
+            ``3.0``).
+
+        Example:
+            >>> vp = VideoProcessor(...)
+            >>> offset, mag = vp.latent_offset(time.time())
+            >>> latent = baseline_latent + torch.from_numpy(offset).to(vp.device)
+        """
 
         phase = (t % self.cycle_seconds) / self.cycle_seconds
         raw_amt = 1.0 - abs(phase * 2.0 - 1.0)
