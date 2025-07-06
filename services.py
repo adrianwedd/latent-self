@@ -390,7 +390,10 @@ class VideoProcessor:
 
         self.tracker = _EyeTracker(alpha=self.config.data.get("tracker_alpha", 0.4))
         self.tracker_lock = Lock()
-        self._canonical = np.array([[80.0, 100.0], [176.0, 100.0]], dtype=np.float32)
+        self._canonical = np.array(
+            self.config.data.get("canonical_eyes", [[80.0, 100.0], [176.0, 100.0]]),
+            dtype=np.float32,
+        )
         self.stop_event = Event()
         self._processing_thread: Thread | None = None
         self.REENCODE_INTERVAL_S = 10.0
@@ -411,6 +414,10 @@ class VideoProcessor:
         self._hud_values = {k: None for k in self.direction_labels}
         with self.tracker_lock:
             self.tracker.alpha = self.config.data.get("tracker_alpha", 0.4)
+        self._canonical = np.array(
+            self.config.data.get("canonical_eyes", [[80.0, 100.0], [176.0, 100.0]]),
+            dtype=np.float32,
+        )
 
     # ------------------------------------------------------------------
     # Core latent helpers
