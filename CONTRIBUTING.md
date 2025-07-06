@@ -23,3 +23,6 @@ Thank you for considering contributing! We welcome pull requests and issues.
 - `enhancement`: new feature or request
 - `documentation`: docs improvements
 - `maintenance`: refactoring or cleanup
+
+## Release Process
+For maintainers: follow [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) when preparing a new version.
