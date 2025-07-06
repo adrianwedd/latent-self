@@ -11,6 +11,8 @@ import services
 class DummyMQTT:
     def __init__(self, client_id=None):
         self.published = []
+        self.tls_config = None
+        self.auth = None
 
     def connect(self, host, port, keepalive):
         pass
@@ -26,6 +28,12 @@ class DummyMQTT:
 
     def loop_stop(self):
         pass
+
+    def tls_set(self, ca_certs=None, certfile=None, keyfile=None):
+        self.tls_config = (ca_certs, certfile, keyfile)
+
+    def username_pw_set(self, username, password=None):
+        self.auth = (username, password)
 
 
 def test_heartbeat_interval_and_payload(monkeypatch):
@@ -61,4 +69,31 @@ def test_heartbeat_interval_and_payload(monkeypatch):
     monkeypatch.setattr(services, 'time', lambda: 16)
     client.send_heartbeat()
     assert len(client.client.published) == 2
+
+
+def test_tls_and_auth(monkeypatch):
+    monkeypatch.setattr(services, 'MQTT_AVAILABLE', True)
+    monkeypatch.setattr(services, 'mqtt', SimpleNamespace(Client=DummyMQTT))
+    monkeypatch.setattr(services, 'platform', SimpleNamespace(node=lambda: 'n'))
+    monkeypatch.setenv('PASS', 'secret')
+
+    cfg = {
+        'enabled': True,
+        'broker': 'mqtts://broker.example.com:8883',
+        'port': 8883,
+        'topic_namespace': 'mirror',
+        'device_id': 'dev1',
+        'heartbeat_interval': 5,
+        'username': 'user',
+        'password': '$PASS',
+        'ca_cert': '/ca.crt',
+        'client_cert': '/client.crt',
+        'client_key': '/client.key',
+    }
+
+    config = SimpleNamespace(data={'mqtt': cfg})
+    client = services.TelemetryClient(config)
+
+    assert client.client.auth == ('user', 'secret')
+    assert client.client.tls_config == ('/ca.crt', '/client.crt', '/client.key')
 

@@ -380,11 +380,11 @@ PHASE_K_AUDIT:
   - id: AUDIT-012
     title: Secure MQTT (TLS & auth)
     desc: |
-      • Add username/password or cert auth; support mqtts://;  
+      • Add username/password or cert auth; support mqtts://;
       • Securely store creds; validate incoming messages.
     tags: [security, network]
     priority: P2
-    status: todo
+    status: done
 
   # ──────────────── Tests, docs, CI ────────────────────────────────────────────
   - id: AUDIT-013

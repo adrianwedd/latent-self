@@ -26,6 +26,12 @@ class MQTTConfig(BaseModel):
     topic_namespace: str = "mirror"
     device_id: str = ""
     heartbeat_interval: int = 5
+    username: str | None = None
+    password: str | None = None
+    tls: bool = False
+    ca_cert: str | None = None
+    client_cert: str | None = None
+    client_key: str | None = None
 
 class AppConfig(BaseModel):
     """Primary application configuration model."""

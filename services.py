@@ -11,6 +11,8 @@ from pathlib import Path
 from threading import Event, Thread, Lock
 from queue import SimpleQueue
 from typing import Callable, TypeVar, TYPE_CHECKING
+from urllib.parse import urlparse
+import os
 
 if TYPE_CHECKING:  # pragma: no cover - type checking only
     from PyQt6.QtCore import pyqtSignal
@@ -813,14 +815,41 @@ class TelemetryClient:
             self.client = None
             return
 
-        broker = config.data["mqtt"]["broker"]
-        port = config.data["mqtt"]["port"]
-        topic_namespace = config.data["mqtt"]["topic_namespace"]
-        device_id = config.data["mqtt"].get("device_id") or platform.node()
+        mqtt_cfg = config.data["mqtt"]
+        broker = mqtt_cfg["broker"]
+        port = mqtt_cfg["port"]
+        use_tls = mqtt_cfg.get("tls", False)
+
+        # Support mqtt:// and mqtts:// URLs
+        if broker.startswith("mqtt://") or broker.startswith("mqtts://"):
+            parsed = urlparse(broker)
+            broker = parsed.hostname or "localhost"
+            if parsed.port:
+                port = parsed.port
+            use_tls = parsed.scheme == "mqtts"
+
+        topic_namespace = mqtt_cfg["topic_namespace"]
+        device_id = mqtt_cfg.get("device_id") or platform.node()
 
         self.client = mqtt.Client(client_id=device_id)
         self.client.on_connect = lambda c, u, f, rc: logging.info("MQTT connected" if rc == 0 else f"MQTT connect failed {rc}")
         self.client.on_disconnect = lambda c, u, rc: logging.warning(f"MQTT disconnected {rc}")
+
+        username = mqtt_cfg.get("username")
+        password = mqtt_cfg.get("password")
+        if password and isinstance(password, str) and password.startswith("$"):
+            password = os.getenv(password[1:], "")
+
+        if username:
+            self.client.username_pw_set(username, password or None)
+
+        if use_tls:
+            self.client.tls_set(
+                ca_certs=mqtt_cfg.get("ca_cert"),
+                certfile=mqtt_cfg.get("client_cert"),
+                keyfile=mqtt_cfg.get("client_key"),
+            )
+
         try:
             self.client.connect(broker, port, 60)
             self.client.loop_start()
