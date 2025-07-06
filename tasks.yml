@@ -435,4 +435,4 @@ PHASE_L_REVIEW:
     desc: Explain installing dependencies and running pytest in CONTRIBUTING.md.
     tags: [docs, tests]
     priority: P3
-    status: todo
+    status: done
