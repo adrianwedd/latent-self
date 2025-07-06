@@ -33,3 +33,9 @@ mqtt:
   topic_namespace: "mirror"
   device_id: ""
   heartbeat_interval: 5
+  username:
+  password:
+  tls: false
+  ca_cert:
+  client_cert:
+  client_key:
