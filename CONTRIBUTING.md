@@ -8,6 +8,16 @@ Thank you for considering contributing! We welcome pull requests and issues.
 3. Run `python -m py_compile latent_self.py ui/*.py` before committing.
 4. Execute tests with `pytest`.
 
+## Test Environment Setup
+To run the test suite locally:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+pytest
+```
+
 ## Code Style
 - Follow [PEP8](https://peps.python.org/pep-0008/) and type-hint all public APIs.
 - Use Google-style docstrings.
