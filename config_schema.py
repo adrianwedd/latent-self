@@ -33,6 +33,13 @@ class MQTTConfig(BaseModel):
     client_cert: str | None = None
     client_key: str | None = None
 
+class EyeTrackerConfig(BaseModel):
+    """Configuration for eye tracking alignment."""
+
+    left_eye: list[float] = Field(default_factory=lambda: [80.0, 100.0])
+    right_eye: list[float] = Field(default_factory=lambda: [176.0, 100.0])
+
+
 class AppConfig(BaseModel):
     """Primary application configuration model."""
 
@@ -40,9 +47,7 @@ class AppConfig(BaseModel):
     blend_weights: BlendWeights = Field(default_factory=BlendWeights)
     fps: int = 15
     tracker_alpha: float = 0.4
-    eye_canonical: list[list[float]] = Field(
-        default_factory=lambda: [[80.0, 100.0], [176.0, 100.0]]
-    )
+    eye_tracker: EyeTrackerConfig = Field(default_factory=EyeTrackerConfig)
     admin_password_hash: str = ""
     mqtt: MQTTConfig = Field(default_factory=MQTTConfig)
     idle_seconds: int = 3

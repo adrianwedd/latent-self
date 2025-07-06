@@ -56,7 +56,7 @@ Key configuration parameters include:
 - `blend_weights`: Dictionary controlling the influence of different latent directions (age, gender, ethnicity, species) when in blended morphing mode.
 - `fps`: Target frames per second for the display.
 - `tracker_alpha`: Smoothing factor for the eye-tracking algorithm.
-- `eye_canonical`: Reference eye coordinates used for face alignment.
+- `eye_tracker.left_eye`/`right_eye`: Reference eye coordinates used for face alignment.
 - `admin_password_hash`: Hashed password for accessing the admin panel.
 - To generate a new hash run `python scripts/generate_password_hash.py` and
   paste the output into `admin_password_hash` in your config file.
