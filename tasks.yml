@@ -346,11 +346,11 @@ PHASE_K_AUDIT:
   - id: AUDIT-008
     title: Adaptive frame-rate & frame-dropping
     desc: |
-      • Measure encode FPS; if below target, drop frames or lower resolution.  
+      • Measure encode FPS; if below target, drop frames or lower resolution.
       • Add --low_power preset.
     tags: [performance, video]
     priority: P2
-    status: todo
+    status: done
 
   # ──────────────── Code-quality & logging ─────────────────────────────────────
   - id: AUDIT-009

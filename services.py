@@ -368,6 +368,7 @@ class VideoProcessor:
         ui: str,
         telemetry: "TelemetryClient | None" = None,
         demo: bool = False,
+        low_power: bool = False,
     ) -> None:
         """Create a new processor instance.
 
@@ -379,6 +380,7 @@ class VideoProcessor:
             resolution: Square frame size in pixels.
             ui: ``"cv2"`` or ``"qt"`` user interface backend.
             telemetry: Optional telemetry client for heartbeats.
+            low_power: Enable adaptive resolution and frame skipping.
         """
         self.model_manager = model_manager
         self.config = config
@@ -388,6 +390,7 @@ class VideoProcessor:
         self.ui = ui
         self.telemetry = telemetry
         self.demo = demo
+        self.low_power = low_power
         self.demo_frames: list[Path] = []
         self._demo_index = 0
         if self.demo:
@@ -418,6 +421,10 @@ class VideoProcessor:
         self.command_queue: SimpleQueue[Direction] = SimpleQueue()
         self.active_direction = Direction.BLEND
         self._last_affine: np.ndarray | None = None
+        self._encode_durations: list[float] = []
+        self.encode_fps = 0.0
+        self._skip_next = False
+        self.target_fps = self.config.data.get("fps", 15)
 
         self._apply_config()
 
@@ -435,6 +442,7 @@ class VideoProcessor:
             self.config.data.get("canonical_eyes", [[80.0, 100.0], [176.0, 100.0]]),
             dtype=np.float32,
         )
+        self.target_fps = self.config.data.get("fps", 15)
         emotion = self.config.data.get("active_emotion")
         if emotion:
             try:
@@ -448,6 +456,7 @@ class VideoProcessor:
     # ------------------------------------------------------------------
     def encode_face(self, frame: np.ndarray) -> torch.Tensor:
         """Encode the current frame into latent ``w+`` space."""
+        start = time()
         with log_timing("encode_face"):
             with self.tracker_lock:
                 eyes = self.tracker.get_eyes(frame)
@@ -460,7 +469,14 @@ class VideoProcessor:
                 crop = cv2.warpAffine(frame, M, (256, 256))
             latent, _ = self.model_manager.E(_to_tensor(crop).to(self.device), return_latents=True)
             self._last_affine = M
-            return latent
+        dur = time() - start
+        self._encode_durations.append(dur)
+        if len(self._encode_durations) > 10:
+            self._encode_durations.pop(0)
+        total = sum(self._encode_durations)
+        if total > 0:
+            self.encode_fps = len(self._encode_durations) / total
+        return latent
 
     def decode_latent(self, latent_w_plus: torch.Tensor, target_shape: tuple[int, int]) -> np.ndarray:
         """Decode a latent tensor back into an image matching ``target_shape``."""
@@ -645,6 +661,21 @@ class VideoProcessor:
         self._send_mqtt_heartbeat()
         return True
 
+    def _maybe_adjust_performance(self) -> None:
+        """Adapt resolution or drop frames when encode FPS is too low."""
+        if not self.low_power or not self._encode_durations:
+            return
+        if self.encode_fps >= self.target_fps:
+            return
+        if self.resolution > 128:
+            self.resolution = max(128, self.resolution // 2)
+            if self.cap is not None:
+                self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.resolution)
+                self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.resolution)
+            logging.warning("Low-power mode: reduced resolution to %spx", self.resolution)
+        else:
+            self._skip_next = True
+
     def _process_stream(self, frame_emitter: "pyqtSignal" | None = None) -> None:
         """Main loop reading camera frames and emitting processed output."""
 
@@ -667,10 +698,26 @@ class VideoProcessor:
         fade_frames = int(self.config.data.get("idle_fade_frames", self.config.data["fps"]))
         retry_delay = 1.0
         max_delay = 30.0
+        last_out_frame: np.ndarray | None = None
+        last_current_magnitude = 0.0
 
         try:
             while not self.stop_event.is_set():
                 self._drain_direction_queue()
+
+                if self.low_power and self._skip_next:
+                    self._skip_next = False
+                    if last_out_frame is not None:
+                        if not self._display_frame(
+                            last_out_frame,
+                            frame_emitter,
+                            last_current_magnitude,
+                            idle_frames,
+                            idle_threshold,
+                            fade_frames,
+                        ):
+                            break
+                    continue
 
                 if not self.camera_available:
                     retry_delay = self._handle_camera_error(frame_emitter, retry_delay, max_delay)
@@ -697,7 +744,7 @@ class VideoProcessor:
                     idle_frames,
                     current_magnitude,
                 ) = self._process_frame(frame, baseline_latent, last_encode, idle_frames)
-
+                
                 if not self._display_frame(
                     out_frame,
                     frame_emitter,
@@ -707,6 +754,9 @@ class VideoProcessor:
                     fade_frames,
                 ):
                     break
+                last_out_frame = out_frame
+                last_current_magnitude = current_magnitude
+                self._maybe_adjust_performance()
         finally:
             if self.cap is not None:
                 self.cap.release()
