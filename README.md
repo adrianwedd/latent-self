@@ -38,6 +38,17 @@ This project requires the following model weights:
 
 Place these files in a `models` directory in the project root.
 
+## Admin Password
+
+Generate a hashed password for the admin panel:
+
+```bash
+python scripts/generate_password_hash.py mysecret
+```
+
+Copy the printed hash into your `config.yaml` under the
+`admin_password_hash` field.
+
 ## Usage
 
 ```bash

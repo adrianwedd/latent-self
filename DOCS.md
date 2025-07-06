@@ -57,6 +57,8 @@ Key configuration parameters include:
 - `tracker_alpha`: Smoothing factor for the eye-tracking algorithm.
 - `canonical_eyes`: Reference eye coordinates used for face alignment.
 - `admin_password_hash`: Hashed password for accessing the admin panel.
+- To generate a new hash run `python scripts/generate_password_hash.py` and
+  paste the output into `admin_password_hash` in your config file.
 - `mqtt`: MQTT broker settings for optional remote monitoring.
 
 ## Extending Functionality
