@@ -134,6 +134,13 @@ PHASE_F_DOCS_AGENTS:
     priority: P1
     status: done
 
+  - id: DOCS-007
+    title: Add user manual
+    desc: Create docs/user_manual.md with installation, configuration and common issues.
+    tags: [docs]
+    priority: P2
+    status: done
+
 PHASE_G_TESTS_AGENTS:
   - id: TEST-001
     title: Unit tests for latent_offset

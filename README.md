@@ -65,3 +65,5 @@ For additional options run:
 ```bash
 python latent_self.py -h
 ```
+
+See the [User Manual](docs/user_manual.md) for detailed setup and troubleshooting.
