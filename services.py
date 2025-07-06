@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from threading import Event, Thread, Lock
 from queue import SimpleQueue
-from typing import Callable, TypeVar, TYPE_CHECKING
+from typing import Callable, TypeVar, TYPE_CHECKING, Sequence
 from urllib.parse import urlparse
 import os
 
@@ -280,11 +280,12 @@ class ModelManager:
 class _EyeTracker:
     """Lightweight eye-landmark tracker using Mediapipe."""
 
-    def __init__(self, alpha: float = 0.4) -> None:
+    def __init__(self, alpha: float = 0.4, canonical: Sequence[Sequence[float]] | None = None) -> None:
         """Create a new tracker instance.
 
         Args:
             alpha: Smoothing factor between 0 and 1 for landmark movement.
+            canonical: Target eye coordinates for face alignment.
         """
         self.mesh = mp.solutions.face_mesh.FaceMesh(
             static_image_mode=False,
@@ -292,6 +293,7 @@ class _EyeTracker:
             refine_landmarks=True,
         )
         self.alpha = alpha
+        self.canonical = np.array(canonical or [[80.0, 100.0], [176.0, 100.0]], dtype=np.float32)
         self.left_eye: tuple[int, int] | None = None
         self.right_eye: tuple[int, int] | None = None
 
@@ -410,12 +412,11 @@ class VideoProcessor:
         self.cap: cv2.VideoCapture | None = None
         self.camera_available = False
 
-        self.tracker = _EyeTracker(alpha=self.config.data.get("tracker_alpha", 0.4))
-        self.tracker_lock = Lock()
-        self._canonical = np.array(
-            self.config.data.get("canonical_eyes", [[80.0, 100.0], [176.0, 100.0]]),
-            dtype=np.float32,
+        self.tracker = _EyeTracker(
+            alpha=self.config.data.get("tracker_alpha", 0.4),
+            canonical=self.config.data.get("eye_canonical", [[80.0, 100.0], [176.0, 100.0]]),
         )
+        self.tracker_lock = Lock()
         self.stop_event = Event()
         self._processing_thread: Thread | None = None
         self.REENCODE_INTERVAL_S = 10.0
@@ -440,10 +441,10 @@ class VideoProcessor:
         self._hud_values = {k: None for k in self.direction_labels}
         with self.tracker_lock:
             self.tracker.alpha = self.config.data.get("tracker_alpha", 0.4)
-        self._canonical = np.array(
-            self.config.data.get("canonical_eyes", [[80.0, 100.0], [176.0, 100.0]]),
-            dtype=np.float32,
-        )
+            self.tracker.canonical = np.array(
+                self.config.data.get("eye_canonical", [[80.0, 100.0], [176.0, 100.0]]),
+                dtype=np.float32,
+            )
         self.target_fps = self.config.data.get("fps", 15)
         emotion = self.config.data.get("active_emotion")
         if emotion:
@@ -467,7 +468,10 @@ class VideoProcessor:
                 M = None
             else:
                 le, re = eyes
-                M = cv2.getAffineTransform(np.array([le, re], dtype=np.float32), self._canonical)
+                M = cv2.getAffineTransform(
+                    np.array([le, re], dtype=np.float32),
+                    self.tracker.canonical,
+                )
                 crop = cv2.warpAffine(frame, M, (256, 256))
             latent, _ = self.model_manager.E(_to_tensor(crop).to(self.device), return_latents=True)
             self._last_affine = M

@@ -40,7 +40,7 @@ class AppConfig(BaseModel):
     blend_weights: BlendWeights = Field(default_factory=BlendWeights)
     fps: int = 15
     tracker_alpha: float = 0.4
-    canonical_eyes: list[list[float]] = Field(
+    eye_canonical: list[list[float]] = Field(
         default_factory=lambda: [[80.0, 100.0], [176.0, 100.0]]
     )
     admin_password_hash: str = ""
