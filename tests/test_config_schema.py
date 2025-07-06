@@ -11,6 +11,7 @@ def test_app_config_valid():
     config = AppConfig(**data)
     assert config.cycle_duration > 0
     assert 'age' in config.blend_weights.model_dump()
+    assert len(config.canonical_eyes) == 2
 
 
 def test_app_config_invalid_cycle_duration():

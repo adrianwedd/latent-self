@@ -55,6 +55,7 @@ Key configuration parameters include:
 - `blend_weights`: Dictionary controlling the influence of different latent directions (age, gender, ethnicity, species) when in blended morphing mode.
 - `fps`: Target frames per second for the display.
 - `tracker_alpha`: Smoothing factor for the eye-tracking algorithm.
+- `canonical_eyes`: Reference eye coordinates used for face alignment.
 - `admin_password_hash`: Hashed password for accessing the admin panel.
 - `mqtt`: MQTT broker settings for optional remote monitoring.
 
