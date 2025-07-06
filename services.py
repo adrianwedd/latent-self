@@ -576,11 +576,8 @@ class VideoProcessor:
 
         self.stop_event.wait(retry_delay)
         retry_delay = min(retry_delay * 2, max_delay)
-        self.cap = cv2.VideoCapture(self.camera_index)
-        if self.cap.isOpened():
-            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.resolution)
-            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.resolution)
-            self.camera_available = True
+        self._init_camera()
+        if self.camera_available:
             retry_delay = 1.0
             logging.info("Camera re-initialized successfully.")
         return retry_delay
@@ -623,7 +620,7 @@ class VideoProcessor:
         idle_threshold: int,
         fade_frames: int,
     ) -> bool:
-        """Render the frame via Qt or OpenCV and handle input."""
+        """Render the frame via Qt or OpenCV."""
 
         with self._direction_lock:
             mode = self.active_direction
@@ -639,11 +636,7 @@ class VideoProcessor:
             cv2.LINE_AA,
         )
 
-        if idle_frames > idle_threshold:
-            alpha = min(1.0, (idle_frames - idle_threshold) / fade_frames)
-            overlay = out_frame.copy()
-            overlay[:] = (0, 0, 0)
-            cv2.addWeighted(overlay, alpha, out_frame, 1 - alpha, 0, out_frame)
+        self._apply_idle_overlay(out_frame, idle_frames, idle_threshold, fade_frames)
 
         if self.ui == "qt" and frame_emitter:
             from PyQt6.QtCore import QThread
@@ -654,6 +647,28 @@ class VideoProcessor:
 
         cv2.imshow("Latent Self", out_frame)
         key = cv2.waitKey(int(1000 / self.config.data["fps"])) & 0xFF
+        return self._handle_frame_input(key)
+
+    def _apply_idle_overlay(
+        self,
+        frame: np.ndarray,
+        idle_frames: int,
+        idle_threshold: int,
+        fade_frames: int,
+    ) -> None:
+        """Darken the frame when the user is idle."""
+
+        if idle_frames <= idle_threshold:
+            return
+
+        alpha = min(1.0, (idle_frames - idle_threshold) / fade_frames)
+        overlay = frame.copy()
+        overlay[:] = (0, 0, 0)
+        cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
+
+    def _handle_frame_input(self, key: int) -> bool:
+        """Process keyboard input and update state."""
+
         if key == ord("q"):
             self.stop_event.set()
             return False
@@ -698,7 +713,7 @@ class VideoProcessor:
             ret, frame = self.cap.read()
         return ret, frame
 
-    def _open_camera(self) -> None:
+    def _init_camera(self) -> None:
         """Initialize the camera capture device."""
 
         self.cap = cv2.VideoCapture(self.camera_index)
@@ -717,7 +732,7 @@ class VideoProcessor:
         """
 
         if not self.demo_frames:
-            self._open_camera()
+            self._init_camera()
         else:
             self.cap = None
             self.camera_available = True
