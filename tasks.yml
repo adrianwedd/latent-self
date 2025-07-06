@@ -254,7 +254,7 @@ PHASE_J_ENHANCEMENTS:
       • Provide hot-keys or Admin dropdown; HUD support.
     tags: [model, feature]
     priority: P1
-    status: todo
+    status: done
 
   - id: EMOTION-002
     title: UI controls for emotion bank
