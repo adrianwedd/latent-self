@@ -276,7 +276,7 @@ PHASE_J_ENHANCEMENTS:
     desc: Extend pytest fixture; assert vectors present, unit-L2, and orthogonality < 0.3 against existing axes.
     tags: [tests]
     priority: P1
-    status: todo
+    status: done
 PHASE_K_AUDIT:
   # ──────────────── Critical bug-fixes ──────────────────────────────────────────
   - id: AUDIT-001
