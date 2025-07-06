@@ -421,7 +421,7 @@ PHASE_L_REVIEW:
     desc: Complete the README instructions and remove stray lines.
     tags: [docs]
     priority: P3
-    status: todo
+    status: done
 
   - id: REVIEW-004
     title: Document test environment setup
