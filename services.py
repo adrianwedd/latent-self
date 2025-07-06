@@ -143,7 +143,7 @@ class ConfigManager:
             with self.directions_path.open("r") as f:
                 raw_dir = yaml.safe_load(f) or {}
             dirs = DirectionsConfig(__root__=raw_dir)
-            self.directions_data = dirs.to_dict()
+            self.directions_data = dirs.model_dump()
         except (yaml.YAMLError, ValidationError) as e:
             raise RuntimeError(f"Invalid directions.yaml: {e}")
 
