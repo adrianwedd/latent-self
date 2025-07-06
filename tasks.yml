@@ -414,7 +414,7 @@ PHASE_L_REVIEW:
     desc: Replace deprecated .dict() usages with .model_dump() in services.py.
     tags: [refactor, pydantic]
     priority: P3
-    status: todo
+    status: done
 
   - id: REVIEW-003
     title: Fix truncated README usage section

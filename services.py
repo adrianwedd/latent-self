@@ -121,7 +121,7 @@ class ConfigManager:
         if overrides.max_gpu_mem_gb is not None:
             self.data["max_gpu_mem_gb"] = overrides.max_gpu_mem_gb
         try:
-            self.data = AppConfig(**self.data).dict()
+            self.data = AppConfig(**self.data).model_dump()
         except ValidationError as e:
             raise RuntimeError(f"Invalid configuration after CLI overrides: {e}")
 
@@ -131,7 +131,7 @@ class ConfigManager:
             with self.config_path.open("r") as f:
                 raw_cfg = yaml.safe_load(f) or {}
             cfg = AppConfig(**raw_cfg)
-            self.data = cfg.dict()
+            self.data = cfg.model_dump()
         except (yaml.YAMLError, ValidationError) as e:
             raise RuntimeError(f"Invalid config.yaml: {e}")
 
