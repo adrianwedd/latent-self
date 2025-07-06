@@ -436,3 +436,10 @@ PHASE_L_REVIEW:
     tags: [docs, tests]
     priority: P3
     status: done
+
+  - id: REVIEW-005
+    title: Configurable eye canonical coordinates
+    desc: Load reference eye points from config and use them in VideoProcessor.
+    tags: [enhancement, config]
+    priority: P3
+    status: done
