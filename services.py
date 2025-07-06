@@ -120,6 +120,8 @@ class ConfigManager:
             self.data["max_cpu_mem_mb"] = overrides.max_cpu_mem_mb
         if overrides.max_gpu_mem_gb is not None:
             self.data["max_gpu_mem_gb"] = overrides.max_gpu_mem_gb
+        if overrides.emotion is not None:
+            self.data["active_emotion"] = overrides.emotion.value
         try:
             self.data = AppConfig(**self.data).model_dump()
         except ValidationError as e:
@@ -433,6 +435,13 @@ class VideoProcessor:
             self.config.data.get("canonical_eyes", [[80.0, 100.0], [176.0, 100.0]]),
             dtype=np.float32,
         )
+        emotion = self.config.data.get("active_emotion")
+        if emotion:
+            try:
+                with self._direction_lock:
+                    self.active_direction = Direction.from_str(emotion)
+            except ValueError:
+                logging.warning("Unknown emotion '%s' in config", emotion)
 
     # ------------------------------------------------------------------
     # Core latent helpers
