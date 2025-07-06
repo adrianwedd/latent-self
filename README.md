@@ -9,7 +9,8 @@ Latent Self is an interactive art installation that uses a webcam to capture a u
 ## Features
 
 *   Real-time face morphing
-*   Multiple transformation axes (age, gender, smile, species)
+*   Multiple transformation axes (age, gender, smile, species, beauty)
+*   Emotion bank with six presets (happy, angry, sad, fear, disgust, surprise)
 *   Adjustable blend weights for each axis
 *   Fullscreen kiosk mode (`--kiosk`)
 *   Admin panel for on-site configuration
@@ -58,6 +59,27 @@ python latent_self.py --ui qt --kiosk  # Qt fullscreen
 python latent_self.py --demo           # Use prerecorded media
 ```
 
+### Controls
+
+Keyboard shortcuts when running with the default OpenCV UI:
+
+```
+q - quit
+y - age
+g - gender
+h - smile
+e - ethnicity
+s - species
+u - beauty
+1 - happy
+2 - angry
+3 - sad
+4 - fear
+5 - disgust
+6 - surprise
+b - blended morph
+```
+
 ## Demo
 
 ![Demo GIF](https://via.placeholder.com/600x400.gif?text=Demo+GIF+Placeholder)
@@ -72,3 +94,6 @@ python latent_self.py -h
 ```
 
 See the [User Manual](docs/user_manual.md) for detailed setup and troubleshooting.
+
+![Admin Controls](https://via.placeholder.com/800x400.png?text=Admin+Controls)
+
