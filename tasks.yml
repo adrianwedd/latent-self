@@ -443,3 +443,10 @@ PHASE_L_REVIEW:
     tags: [enhancement, config]
     priority: P3
     status: done
+
+  - id: REVIEW-006
+    title: Factor VideoProcessor stream loop
+    desc: Break _process_stream into helper methods for camera errors, frame processing and UI display.
+    tags: [refactor, video]
+    priority: P3
+    status: done
