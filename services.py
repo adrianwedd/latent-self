@@ -473,10 +473,125 @@ class VideoProcessor:
         if self.telemetry:
             self.telemetry.send_heartbeat()
 
+    def _handle_camera_error(
+        self,
+        frame_emitter: "pyqtSignal" | None,
+        retry_delay: float,
+        max_delay: float,
+    ) -> float:
+        """Display an error screen and retry camera initialization."""
+
+        logging.error("Camera not available. Displaying error screen and retrying...")
+        h, w = self.resolution, self.resolution
+        error_frame = np.zeros((h, w, 3), dtype=np.uint8)
+        error_text = "Camera Not Available"
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        text_size = cv2.getTextSize(error_text, font, 1, 2)[0]
+        text_x = (w - text_size[0]) // 2
+        text_y = (h + text_size[1]) // 2
+        cv2.putText(error_frame, error_text, (text_x, text_y), font, 1, (0, 0, 255), 2, cv2.LINE_AA)
+
+        if self.ui == "qt" and frame_emitter:
+            frame_emitter.emit(_numpy_to_qimage(error_frame))
+        else:
+            cv2.imshow("Latent Self", error_frame)
+            cv2.waitKey(1)
+
+        self.stop_event.wait(retry_delay)
+        retry_delay = min(retry_delay * 2, max_delay)
+        self.cap = cv2.VideoCapture(self.camera_index)
+        if self.cap.isOpened():
+            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.resolution)
+            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.resolution)
+            self.camera_available = True
+            retry_delay = 1.0
+            logging.info("Camera re-initialized successfully.")
+        return retry_delay
+
+    def _process_frame(
+        self,
+        frame: np.ndarray,
+        baseline_latent: torch.Tensor | None,
+        last_encode: float,
+        idle_frames: int,
+    ) -> tuple[np.ndarray, torch.Tensor, float, int, float]:
+        """Process a single frame and return augmented output."""
+
+        now = time()
+        if baseline_latent is None or (now - last_encode) > self.REENCODE_INTERVAL_S:
+            baseline_latent = self.encode_face(frame)
+            last_encode = now
+            logging.info("Encoded new baseline latent.")
+
+        offset, current_magnitude = self.latent_offset(now)
+        latent_mod = baseline_latent + torch.from_numpy(offset).to(self.device)
+        out_frame = self.decode_latent(latent_mod, (frame.shape[0], frame.shape[1]))
+
+        eyes = self.tracker.left_eye, self.tracker.right_eye
+        if eyes[0] is not None and eyes[1] is not None:
+            idle_frames = 0
+            cv2.circle(out_frame, eyes[0], 3, (0, 255, 0), -1)
+            cv2.circle(out_frame, eyes[1], 3, (0, 255, 0), -1)
+        else:
+            idle_frames += 1
+
+        return out_frame, baseline_latent, last_encode, idle_frames, current_magnitude
+
+    def _display_frame(
+        self,
+        out_frame: np.ndarray,
+        frame_emitter: "pyqtSignal" | None,
+        current_magnitude: float,
+        idle_frames: int,
+        idle_threshold: int,
+        fade_frames: int,
+    ) -> bool:
+        """Render the frame via Qt or OpenCV and handle input."""
+
+        with self._direction_lock:
+            mode = self.active_direction
+        mode_label = self.direction_labels.get(mode.value, mode.value.capitalize())
+        cv2.putText(
+            out_frame,
+            f"Mode: {mode_label.capitalize()} ({current_magnitude:+.1f})",
+            (10, out_frame.shape[0] - 20),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.7,
+            (255, 255, 255),
+            2,
+            cv2.LINE_AA,
+        )
+
+        if idle_frames > idle_threshold:
+            alpha = min(1.0, (idle_frames - idle_threshold) / fade_frames)
+            overlay = out_frame.copy()
+            overlay[:] = (0, 0, 0)
+            cv2.addWeighted(overlay, alpha, out_frame, 1 - alpha, 0, out_frame)
+
+        if self.ui == "qt" and frame_emitter:
+            from PyQt6.QtCore import QThread
+
+            frame_emitter.emit(_numpy_to_qimage(out_frame))
+            QThread.msleep(int(1000 / self.config.data["fps"]))
+            return True
+
+        cv2.imshow("Latent Self", out_frame)
+        key = cv2.waitKey(int(1000 / self.config.data["fps"])) & 0xFF
+        if key == ord("q"):
+            self.stop_event.set()
+            return False
+
+        ch = chr(key).lower()
+        direction = Direction.from_key(ch)
+        if direction:
+            with self._direction_lock:
+                self.active_direction = direction
+
+        self._send_mqtt_heartbeat()
+        return True
+
     def _process_stream(self, frame_emitter: "pyqtSignal" | None = None) -> None:
         """Main loop reading camera frames and emitting processed output."""
-
-        from PyQt6.QtCore import QThread
 
         self.cap = cv2.VideoCapture(self.camera_index)
         self.camera_available = self.cap.isOpened()
@@ -497,32 +612,9 @@ class VideoProcessor:
         try:
             while not self.stop_event.is_set():
                 self._drain_direction_queue()
+
                 if not self.camera_available:
-                    logging.error("Camera not available. Displaying error screen and retrying...")
-                    h, w = self.resolution, self.resolution
-                    error_frame = np.zeros((h, w, 3), dtype=np.uint8)
-                    error_text = "Camera Not Available"
-                    font = cv2.FONT_HERSHEY_SIMPLEX
-                    text_size = cv2.getTextSize(error_text, font, 1, 2)[0]
-                    text_x = (w - text_size[0]) // 2
-                    text_y = (h + text_size[1]) // 2
-                    cv2.putText(error_frame, error_text, (text_x, text_y), font, 1, (0, 0, 255), 2, cv2.LINE_AA)
-
-                    if self.ui == "qt" and frame_emitter:
-                        frame_emitter.emit(_numpy_to_qimage(error_frame))
-                    else:
-                        cv2.imshow("Latent Self", error_frame)
-                        cv2.waitKey(1)
-
-                    self.stop_event.wait(retry_delay)
-                    retry_delay = min(retry_delay * 2, max_delay)
-                    self.cap = cv2.VideoCapture(self.camera_index)
-                    if self.cap.isOpened():
-                        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.resolution)
-                        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.resolution)
-                        self.camera_available = True
-                        retry_delay = 1.0
-                        logging.info("Camera re-initialized successfully.")
+                    retry_delay = self._handle_camera_error(frame_emitter, retry_delay, max_delay)
                     continue
 
                 ret, frame = self.cap.read()
@@ -531,61 +623,23 @@ class VideoProcessor:
                     self.camera_available = False
                     continue
 
-                now = time()
-                if baseline_latent is None or (now - last_encode) > self.REENCODE_INTERVAL_S:
-                    baseline_latent = self.encode_face(frame)
-                    last_encode = now
-                    logging.info("Encoded new baseline latent.")
-
-                offset, current_magnitude = self.latent_offset(now)
-                latent_mod = baseline_latent + torch.from_numpy(offset).to(self.device)
-                out_frame = self.decode_latent(latent_mod, (frame.shape[0], frame.shape[1]))
-
-                eyes = self.tracker.left_eye, self.tracker.right_eye
-                if eyes[0] is not None and eyes[1] is not None:
-                    idle_frames = 0
-                    cv2.circle(out_frame, eyes[0], 3, (0, 255, 0), -1)
-                    cv2.circle(out_frame, eyes[1], 3, (0, 255, 0), -1)
-                else:
-                    idle_frames += 1
-
-                with self._direction_lock:
-                    mode = self.active_direction
-                mode_label = self.direction_labels.get(mode.value, mode.value.capitalize())
-                cv2.putText(
+                (
                     out_frame,
-                    f"Mode: {mode_label.capitalize()} ({current_magnitude:+.1f})",
-                    (10, out_frame.shape[0] - 20),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.7,
-                    (255, 255, 255),
-                    2,
-                    cv2.LINE_AA,
-                )
+                    baseline_latent,
+                    last_encode,
+                    idle_frames,
+                    current_magnitude,
+                ) = self._process_frame(frame, baseline_latent, last_encode, idle_frames)
 
-                if idle_frames > idle_threshold:
-                    alpha = min(1.0, (idle_frames - idle_threshold) / fade_frames)
-                    overlay = out_frame.copy()
-                    overlay[:] = (0, 0, 0)
-                    cv2.addWeighted(overlay, alpha, out_frame, 1 - alpha, 0, out_frame)
-
-                if self.ui == "qt" and frame_emitter:
-                    frame_emitter.emit(_numpy_to_qimage(out_frame))
-                    QThread.msleep(int(1000 / self.config.data["fps"]))
-                else:
-                    cv2.imshow("Latent Self", out_frame)
-                    key = cv2.waitKey(int(1000 / self.config.data["fps"])) & 0xFF
-                    if key == ord("q"):
-                        self.stop_event.set()
-                        break
-                    else:
-                        ch = chr(key).lower()
-                        direction = Direction.from_key(ch)
-                        if direction:
-                            with self._direction_lock:
-                                self.active_direction = direction
-
-                    self._send_mqtt_heartbeat()
+                if not self._display_frame(
+                    out_frame,
+                    frame_emitter,
+                    current_magnitude,
+                    idle_frames,
+                    idle_threshold,
+                    fade_frames,
+                ):
+                    break
         finally:
             if self.cap is not None:
                 self.cap.release()
