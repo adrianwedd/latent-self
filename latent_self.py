@@ -228,6 +228,8 @@ def _validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) ->
         val = getattr(args, name)
         if val is not None and not (0.0 <= val <= 1.0):
             parser.error(f"--{name.replace('_','-')} must be between 0 and 1")
+    if args.emotion and args.emotion.lower() not in {"happy", "angry", "sad", "fear", "disgust", "surprise"}:
+        parser.error("--emotion must be one of happy, angry, sad, fear, disgust, surprise")
     if args.max_cpu_mem is not None and args.max_cpu_mem <= 0:
         parser.error("--max-cpu-mem must be positive")
     if args.max_gpu_mem is not None and args.max_gpu_mem <= 0:
@@ -266,6 +268,7 @@ def main(argv: list[str] | None = None) -> None:
     g.add_argument("--blend-gender", type=float, default=None, help="Weight for gender in blended mode")
     g.add_argument("--blend-smile", type=float, default=None, help="Weight for smile in blended mode")
     g.add_argument("--blend-species", type=float, default=None, help="Weight for species in blended mode")
+    g.add_argument("--emotion", type=str, default=None, help="Start with given emotion (happy, angry, sad, fear, disgust, surprise)")
 
     args = parser.parse_args(argv)
 

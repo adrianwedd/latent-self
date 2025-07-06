@@ -3,7 +3,17 @@
 import yaml
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
-    QDialog, QDialogButtonBox, QFormLayout, QInputDialog, QMessageBox, QSlider, QSpinBox, QVBoxLayout
+    QDialog,
+    QDialogButtonBox,
+    QFormLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QInputDialog,
+    QMessageBox,
+    QRadioButton,
+    QSlider,
+    QSpinBox,
+    QVBoxLayout,
 )
 from werkzeug.security import check_password_hash
 
@@ -67,6 +77,21 @@ class AdminDialog(QDialog):
         self.species_slider.setValue(int(self.app.config.data['blend_weights']['species'] * 100))
         form_layout.addRow("Blend Species:", self.species_slider)
 
+        # -- Emotion Selection --
+        self.emotion_groupbox = QGroupBox()
+        emotion_layout = QHBoxLayout()
+        self.emotion_buttons = {}
+        emotions = ["Happy", "Angry", "Sad", "Fear", "Disgust", "Surprise"]
+        current = self.app.config.data.get('active_emotion', 'HAPPY').capitalize()
+        for name in emotions:
+            btn = QRadioButton(name)
+            if name == current:
+                btn.setChecked(True)
+            emotion_layout.addWidget(btn)
+            self.emotion_buttons[name.upper()] = btn
+        self.emotion_groupbox.setLayout(emotion_layout)
+        form_layout.addRow("Emotion:", self.emotion_groupbox)
+
         # -- FPS Target --
         self.fps_spinbox = QSpinBox()
         self.fps_spinbox.setRange(1, 60)
@@ -97,6 +122,14 @@ class AdminDialog(QDialog):
         self.app.config.data['blend_weights']['species'] = self.species_slider.value() / 100.0
         self.app.config.data['fps'] = self.fps_spinbox.value()
         self.app.config.data['tracker_alpha'] = self.tracker_alpha_slider.value() / 100.0
+
+        # emotion selection
+        for name, btn in self.emotion_buttons.items():
+            if btn.isChecked():
+                self.app.config.data['active_emotion'] = name
+                # Apply immediately
+                self.app.video.enqueue_direction(name)
+                break
 
         # Save to file
         with self.app.config.config_path.open("w") as f:

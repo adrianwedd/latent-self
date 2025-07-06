@@ -10,6 +10,7 @@ blend_weights:
   gender: 0.3
   ethnicity: 0.5
   species: 0.2
+active_emotion: HAPPY
 
 # -- Performance --
 fps: 15  # Target frames per second

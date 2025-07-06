@@ -6,6 +6,8 @@ from pydantic import BaseModel, Field, RootModel
 from pydantic_settings import BaseSettings
 from typing import Dict
 
+from directions import Direction
+
 class BlendWeights(BaseModel):
     """Weights for each morphing direction used when blending."""
 
@@ -40,8 +42,10 @@ class AppConfig(BaseModel):
     idle_seconds: int = 3
     max_cpu_mem_mb: int | None = None
     max_gpu_mem_gb: float | None = None
+    emotion: Direction | None = None
     memory_check_interval: int = 10
     idle_fade_frames: int | None = None
+    active_emotion: Direction = Direction.HAPPY
 
 class DirectionEntry(BaseModel):
     """Metadata for a single latent direction."""
@@ -70,3 +74,4 @@ class CLIOverrides(BaseSettings):
     fps: int | None = None
     max_cpu_mem_mb: int | None = None
     max_gpu_mem_gb: float | None = None
+    emotion: Direction | None = None

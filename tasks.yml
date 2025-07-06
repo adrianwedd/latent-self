@@ -261,7 +261,7 @@ PHASE_J_ENHANCEMENTS:
     desc: Implement either radio buttons or single-slider cycle in Qt admin panel; fallback keys in cv2 mode.
     tags: [ui, qt]
     priority: P2
-    status: todo
+    status: done
 
   # ────────────────────────────────────── Docs & Tests ───────────────────────────────────────────
   - id: DOCS-008
