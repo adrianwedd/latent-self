@@ -23,3 +23,10 @@ Follow these steps when preparing a new version of **Latent Self**.
    ```
 2. Optionally draft a GitHub release and upload the built binaries.
 
+## 4. Create a GitHub release
+1. On GitHub, navigate to **Releases** and click **Draft a new release**.
+2. Choose the newly pushed tag (`vX.Y.Z`) and set the release title to the same version.
+3. Copy the changelog notes for this version into the description field.
+4. Upload the PyInstaller artifacts from `dist/` (e.g., `LatentSelf.exe` for Windows or the `tar.gz` for Linux).
+5. Publish the release.
+
