@@ -48,3 +48,9 @@ python latent_self.py --ui qt --kiosk  # Qt fullscreen
 ## Demo
 
 ![Demo GIF](https://via.placeholder.com/600x400.gif?text=Demo+GIF+Placeholder)
+
+For additional options run:
+
+```bash
+python latent_self.py -h
+```
