@@ -103,6 +103,7 @@ class LatentSelf:
         weights_dir: Path,
         ui: str,
         kiosk: bool,
+        demo: bool = False,
         model_manager: ModelManager | None = None,
         video_processor: VideoProcessor | None = None,
         telemetry: TelemetryClient | None = None,
@@ -117,6 +118,7 @@ class LatentSelf:
             weights_dir: Directory containing model weights.
             ui: UI backend to use.
             kiosk: Whether to enable fullscreen kiosk mode.
+            demo: Use prerecorded media from ``data/`` instead of a webcam.
             model_manager: Optional pre-created :class:`ModelManager`.
             video_processor: Optional pre-created :class:`VideoProcessor`.
             telemetry: Optional :class:`TelemetryClient` for metrics.
@@ -127,7 +129,16 @@ class LatentSelf:
         self.kiosk = kiosk
         self.model_manager = model_manager or ModelManager(weights_dir, self.device)
         self.telemetry = telemetry or TelemetryClient(config)
-        self.video = video_processor or VideoProcessor(self.model_manager, config, self.device, camera_index, resolution, ui, self.telemetry)
+        self.video = video_processor or VideoProcessor(
+            self.model_manager,
+            config,
+            self.device,
+            camera_index,
+            resolution,
+            ui,
+            self.telemetry,
+            demo,
+        )
 
         self.memory = MemoryMonitor(config)
 
@@ -241,6 +252,13 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--ui", type=str, default="cv2", choices=["cv2", "qt"], help="UI backend to use")
     parser.add_argument("--kiosk", action="store_true", help="Hide cursor and launch fullscreen (Qt only)")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+    parser.add_argument(
+        "--demo",
+        "--test",
+        action="store_true",
+        dest="demo",
+        help="Use prerecorded media from data/ instead of webcam",
+    )
 
     g = parser.add_argument_group("Morphing Controls (overrides config)")
     g.add_argument("--cycle-duration", type=float, default=None, help="Duration of one morph cycle (seconds)")
@@ -270,6 +288,7 @@ def main(argv: list[str] | None = None) -> None:
         weights_dir=args.weights,
         ui=args.ui,
         kiosk=args.kiosk,
+        demo=args.demo,
     )
     config.app = app
     app.run()

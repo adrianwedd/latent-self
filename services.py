@@ -365,6 +365,7 @@ class VideoProcessor:
         resolution: int,
         ui: str,
         telemetry: "TelemetryClient | None" = None,
+        demo: bool = False,
     ) -> None:
         """Create a new processor instance.
 
@@ -384,6 +385,20 @@ class VideoProcessor:
         self.resolution = resolution
         self.ui = ui
         self.telemetry = telemetry
+        self.demo = demo
+        self.demo_frames: list[Path] = []
+        self._demo_index = 0
+        if self.demo:
+            demo_video = asset_path("data/demo.mp4")
+            demo_dir = asset_path("data/demo")
+            if demo_video.exists():
+                self.camera_index = str(demo_video)
+            elif demo_dir.exists():
+                self.demo_frames = sorted(demo_dir.glob("*.jpg")) + sorted(demo_dir.glob("*.png"))
+            else:
+                logging.warning(
+                    "Demo mode enabled but no demo media found in data/"
+                )
 
         self.cap: cv2.VideoCapture | None = None
         self.camera_available = False
@@ -624,13 +639,17 @@ class VideoProcessor:
     def _process_stream(self, frame_emitter: "pyqtSignal" | None = None) -> None:
         """Main loop reading camera frames and emitting processed output."""
 
-        self.cap = cv2.VideoCapture(self.camera_index)
-        self.camera_available = self.cap.isOpened()
-        if self.camera_available:
-            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.resolution)
-            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.resolution)
+        if not self.demo_frames:
+            self.cap = cv2.VideoCapture(self.camera_index)
+            self.camera_available = self.cap.isOpened()
+            if self.camera_available:
+                self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.resolution)
+                self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.resolution)
+            else:
+                logging.error("Failed to open camera at index %s", self.camera_index)
         else:
-            logging.error("Failed to open camera at index %s", self.camera_index)
+            self.cap = None
+            self.camera_available = True
 
         baseline_latent: torch.Tensor | None = None
         last_encode = 0.0
@@ -648,7 +667,15 @@ class VideoProcessor:
                     retry_delay = self._handle_camera_error(frame_emitter, retry_delay, max_delay)
                     continue
 
-                ret, frame = self.cap.read()
+                if self.demo_frames:
+                    frame = cv2.imread(str(self.demo_frames[self._demo_index]))
+                    self._demo_index = (self._demo_index + 1) % len(self.demo_frames)
+                    ret = frame is not None
+                else:
+                    ret, frame = self.cap.read()
+                    if self.demo and not ret:
+                        self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                        ret, frame = self.cap.read()
                 if not ret:
                     logging.error("Camera read failed – retrying")
                     self.camera_available = False
