@@ -269,7 +269,7 @@ PHASE_J_ENHANCEMENTS:
     desc: Document new CLI hot-keys, update directions list, add screenshots.
     tags: [docs]
     priority: P2
-    status: todo
+    status: done
 
   - id: TEST-005
     title: Unit tests for Beauty and Emotion vectors

@@ -26,7 +26,8 @@ When run for the first time, `data/config.yaml` is copied to a user specific dir
 Key options include:
 
 - `cycle_duration` – seconds for a full morph cycle.
-- `blend_weights` – relative strength of each latent direction.
+- `blend_weights` – relative strength of each latent direction including `beauty`.
+- `active_emotion` – starting emotion (happy, angry, sad, fear, disgust, surprise).
 - `fps` – target frames per second.
 - `admin_password_hash` – hashed password generated via `scripts/generate_password_hash.py`.
 - `mqtt` – optional heartbeat settings.
@@ -46,5 +47,7 @@ You can also edit the YAML file directly or override values via CLI arguments.
 
 **Poor performance**
 : Running on CPU can be slow. Install CUDA drivers and use `--cuda` to enable GPU acceleration.
+
+![Admin Controls](https://via.placeholder.com/800x400.png?text=Admin+Controls)
 
 For additional help see the [project documentation](DOCS.md).
