@@ -9,6 +9,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 from threading import Event, Thread, Lock
+from datetime import datetime
 from queue import SimpleQueue
 from typing import Callable, TypeVar, TYPE_CHECKING, Sequence
 from urllib.parse import urlparse
@@ -19,18 +20,33 @@ if TYPE_CHECKING:  # pragma: no cover - type checking only
     from PyQt6.QtGui import QImage
 
 from directions import Direction
-from logging_setup import log_timing
+from logging_setup import FrameTimer, log_timing
 from time import time
 from typing import Any, Dict
 
 from pydantic import ValidationError
 from config_schema import AppConfig, CLIOverrides, DirectionsConfig
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 import appdirs
 import cv2
 import numpy as np
 import torch
 import yaml
+
+try:
+    import onnxruntime as ort  # type: ignore
+except Exception:  # pragma: no cover - optional dependency
+    ort = None
+
+try:
+    import tensorrt as trt  # type: ignore
+    import pycuda.driver as cuda  # type: ignore
+    import pycuda.autoinit  # noqa: F401
+except Exception:  # pragma: no cover - optional dependency
+    trt = None
+    cuda = None
 
 try:
     import mediapipe as mp
@@ -46,6 +62,13 @@ except ImportError:  # pragma: no cover - optional feature
     mqtt = None
     MQTT_AVAILABLE = False
 
+try:
+    import sounddevice as sd
+    SOUNDDEVICE_AVAILABLE = True
+except Exception:  # pragma: no cover - optional feature
+    sd = None
+    SOUNDDEVICE_AVAILABLE = False
+
 
 # ---------------------------------------------------------------------------
 # Utility helpers
@@ -58,6 +81,34 @@ def asset_path(relative_path: str) -> Path:
     else:
         base_path = Path(__file__).parent
     return base_path / relative_path
+
+
+def select_torch_device(preference: str = "auto") -> torch.device:
+    """Return a torch.device respecting GPU availability.
+
+    Args:
+        preference: ``"auto"``, ``"cpu"`` or ``"cuda"``.
+
+    Returns:
+        Resolved :class:`torch.device` instance.
+    """
+
+    pref = preference.lower()
+
+    if pref == "cpu":
+        return torch.device("cpu")
+
+    if pref == "cuda":
+        if torch.cuda.is_available():
+            return torch.device("cuda")
+        logging.warning("CUDA requested but not available – falling back to CPU")
+        return torch.device("cpu")
+
+    # auto
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    logging.warning("CUDA not available – using CPU")
+    return torch.device("cpu")
 
 
 # ---------------------------------------------------------------------------
@@ -77,13 +128,43 @@ class ConfigManager:
         self.config_dir = Path(appdirs.user_config_dir("LatentSelf"))
         self.config_path = self.config_dir / "config.yaml"
         self.directions_path = self.config_dir / "directions.yaml"
+        self.presets_dir = self.config_dir / "presets"
         self._ensure_config_exists()
         self._ensure_directions_exists()
+        self.presets_dir.mkdir(parents=True, exist_ok=True)
         self.data: Dict[str, Any] = {}
         self.directions_data: Dict[str, Any] = {}
         self.app = app
+        self._lock = Lock()
         self.reload()
         self._override_with_cli(cli_args)
+
+    # ------------------------------------------------------------------
+    # Preset management
+    # ------------------------------------------------------------------
+
+    def list_presets(self) -> list[str]:
+        """Return available preset names without extension."""
+        return [p.stem for p in self.presets_dir.glob("*.yaml")]
+
+    def save_preset(self, name: str) -> None:
+        """Save current configuration under ``name``."""
+        path = self.presets_dir / f"{name}.yaml"
+        with path.open("w") as f:
+            yaml.dump(self.data, f, default_flow_style=False)
+
+    def load_preset(self, name: str) -> None:
+        """Load preset ``name`` and reload configuration."""
+        path = self.presets_dir / f"{name}.yaml"
+        if not path.exists():
+            raise FileNotFoundError(name)
+        with path.open("r") as f:
+            raw = yaml.safe_load(f) or {}
+        cfg = AppConfig(**raw)
+        self.data = cfg.model_dump()
+        with self.config_path.open("w") as out:
+            yaml.dump(self.data, out, default_flow_style=False)
+        self.reload()
 
     def _ensure_config_exists(self) -> None:
         """Create a default ``config.yaml`` if one is missing."""
@@ -104,52 +185,60 @@ class ConfigManager:
     def _override_with_cli(self, args: argparse.Namespace) -> None:
         """Merge CLI overrides using the CLIOverrides model."""
         overrides = CLIOverrides(**vars(args))
+        with self._lock:
+            if overrides.cycle_duration is not None:
+                self.data["cycle_duration"] = overrides.cycle_duration
+            if overrides.blend_age is not None:
+                self.data.setdefault("blend_weights", {})["age"] = overrides.blend_age
+            if overrides.blend_gender is not None:
+                self.data.setdefault("blend_weights", {})["gender"] = overrides.blend_gender
+            if overrides.blend_smile is not None:
+                self.data.setdefault("blend_weights", {})["smile"] = overrides.blend_smile
+            if overrides.blend_species is not None:
+                self.data.setdefault("blend_weights", {})["species"] = overrides.blend_species
+            if overrides.fps is not None:
+                self.data["fps"] = overrides.fps
 
-        if overrides.cycle_duration is not None:
-            self.data["cycle_duration"] = overrides.cycle_duration
-        if overrides.blend_age is not None:
-            self.data.setdefault("blend_weights", {})["age"] = overrides.blend_age
-        if overrides.blend_gender is not None:
-            self.data.setdefault("blend_weights", {})["gender"] = overrides.blend_gender
-        if overrides.blend_smile is not None:
-            self.data.setdefault("blend_weights", {})["smile"] = overrides.blend_smile
-        if overrides.blend_species is not None:
-            self.data.setdefault("blend_weights", {})["species"] = overrides.blend_species
-        if overrides.fps is not None:
-            self.data["fps"] = overrides.fps
+            if overrides.gaze_mode is not None:
+                self.data["gaze_mode"] = overrides.gaze_mode
 
-        if overrides.max_cpu_mem_mb is not None:
-            self.data["max_cpu_mem_mb"] = overrides.max_cpu_mem_mb
-        if overrides.max_gpu_mem_gb is not None:
-            self.data["max_gpu_mem_gb"] = overrides.max_gpu_mem_gb
-        if overrides.emotion is not None:
-            self.data["active_emotion"] = overrides.emotion.value
-        try:
-            self.data = AppConfig(**self.data).model_dump()
-        except ValidationError as e:
-            raise RuntimeError(f"Invalid configuration after CLI overrides: {e}")
+            if overrides.max_cpu_mem_mb is not None:
+                self.data["max_cpu_mem_mb"] = overrides.max_cpu_mem_mb
+            if overrides.max_gpu_mem_gb is not None:
+                self.data["max_gpu_mem_gb"] = overrides.max_gpu_mem_gb
+            if overrides.emotion is not None:
+                self.data["active_emotion"] = overrides.emotion.value
+            if overrides.device is not None:
+                self.data["device"] = overrides.device
+            try:
+                self.data = AppConfig(**self.data).model_dump()
+            except ValidationError as e:
+                raise RuntimeError(f"Invalid configuration after CLI overrides: {e}")
 
     def reload(self) -> None:
         """Reload configuration files with validation."""
-        try:
-            with self.config_path.open("r") as f:
-                raw_cfg = yaml.safe_load(f) or {}
-            cfg = AppConfig(**raw_cfg)
-            self.data = cfg.model_dump()
-        except (yaml.YAMLError, ValidationError) as e:
-            raise RuntimeError(f"Invalid config.yaml: {e}")
+        with self._lock:
+            try:
+                with self.config_path.open("r") as f:
+                    raw_cfg = yaml.safe_load(f) or {}
+                cfg = AppConfig(**raw_cfg)
+                self.data = cfg.model_dump()
+            except (yaml.YAMLError, ValidationError) as e:
+                raise RuntimeError(f"Invalid config.yaml: {e}")
 
-        try:
-            with self.directions_path.open("r") as f:
-                raw_dir = yaml.safe_load(f) or {}
-            dirs = DirectionsConfig(root=raw_dir)
-            self.directions_data = dirs.model_dump()
-        except (yaml.YAMLError, ValidationError) as e:
-            raise RuntimeError(f"Invalid directions.yaml: {e}")
+            try:
+                with self.directions_path.open("r") as f:
+                    raw_dir = yaml.safe_load(f) or {}
+                dirs = DirectionsConfig(root=raw_dir)
+                self.directions_data = dirs.model_dump()
+            except (yaml.YAMLError, ValidationError) as e:
+                raise RuntimeError(f"Invalid directions.yaml: {e}")
 
-        logging.info("Configuration reloaded.")
-        if self.app:
-            self.app._apply_config()
+            logging.info("Configuration reloaded.")
+            if self.app:
+                if hasattr(self.app, "scheduler"):
+                    self.app.scheduler.reload_jobs()
+                self.app._apply_config()
 
 
 # ---------------------------------------------------------------------------
@@ -231,6 +320,124 @@ def get_latent_directions(weights_dir: Path) -> Dict[str, np.ndarray]:
     return dirs
 
 
+class OnnxGenerator:
+    """Wrapper for StyleGAN ONNX generator."""
+
+    def __init__(self, path: Path, device: torch.device) -> None:
+        if ort is None:
+            raise RuntimeError("onnxruntime not installed")
+        providers = ["CUDAExecutionProvider"] if device.type == "cuda" else ["CPUExecutionProvider"]
+        self.session = ort.InferenceSession(str(path), providers=providers)
+        self.input_name = self.session.get_inputs()[0].name
+
+    def synthesis(self, latent_w_plus: torch.Tensor, noise_mode: str = "const"):
+        w = latent_w_plus.detach().cpu().numpy()
+        out = self.session.run(None, {self.input_name: w})[0]
+        img = torch.from_numpy(out)
+        return img, None, None
+
+
+class OnnxEncoder:
+    """Wrapper for e4e ONNX encoder."""
+
+    def __init__(self, path: Path, device: torch.device) -> None:
+        if ort is None:
+            raise RuntimeError("onnxruntime not installed")
+        providers = ["CUDAExecutionProvider"] if device.type == "cuda" else ["CPUExecutionProvider"]
+        self.session = ort.InferenceSession(str(path), providers=providers)
+        self.input_name = self.session.get_inputs()[0].name
+
+    def __call__(self, image: torch.Tensor, return_latents: bool = False):
+        arr = image.detach().cpu().numpy()
+        out = self.session.run(None, {self.input_name: arr})[0]
+        tensor = torch.from_numpy(out)
+        if return_latents:
+            return tensor, None
+        return tensor
+
+
+class TRTModule:
+    """Minimal TensorRT engine wrapper."""
+
+    def __init__(self, path: Path) -> None:
+        if trt is None or cuda is None:
+            raise RuntimeError("tensorrt not installed")
+        logger = trt.Logger(trt.Logger.WARNING)
+        runtime = trt.Runtime(logger)
+        with path.open("rb") as f:
+            self.engine = runtime.deserialize_cuda_engine(f.read())
+        self.context = self.engine.create_execution_context()
+        self.inputs = []
+        self.outputs = []
+        self.bindings = []
+        self.stream = cuda.Stream()
+        for binding in self.engine:
+            size = trt.volume(self.engine.get_binding_shape(binding))
+            dtype = trt.nptype(self.engine.get_binding_dtype(binding))
+            host_mem = cuda.pagelocked_empty(size, dtype)
+            device_mem = cuda.mem_alloc(host_mem.nbytes)
+            self.bindings.append(int(device_mem))
+            if self.engine.binding_is_input(binding):
+                self.inputs.append((host_mem, device_mem))
+            else:
+                self.outputs.append((host_mem, device_mem))
+        self.output_shape = self.engine.get_binding_shape(self.engine.num_bindings - 1)
+
+    def run(self, array: np.ndarray) -> np.ndarray:
+        inp_host, inp_dev = self.inputs[0]
+        out_host, out_dev = self.outputs[0]
+        np.copyto(inp_host, array.ravel())
+        cuda.memcpy_htod_async(inp_dev, inp_host, self.stream)
+        self.context.execute_async_v2(self.bindings, self.stream.handle, None)
+        cuda.memcpy_dtoh_async(out_host, out_dev, self.stream)
+        self.stream.synchronize()
+        return out_host.reshape(self.output_shape)
+
+
+class TRTGenerator(TRTModule):
+    """TensorRT StyleGAN generator."""
+
+    def synthesis(self, latent_w_plus: torch.Tensor, noise_mode: str = "const"):
+        out = self.run(latent_w_plus.detach().cpu().numpy())
+        img = torch.from_numpy(out)
+        return img, None, None
+
+
+class TRTEncoder(TRTModule):
+    """TensorRT e4e encoder."""
+
+    def __call__(self, image: torch.Tensor, return_latents: bool = False):
+        out = self.run(image.detach().cpu().numpy())
+        tensor = torch.from_numpy(out)
+        if return_latents:
+            return tensor, None
+        return tensor
+
+
+def load_stylegan(weights_dir: Path, device: torch.device):
+    engine_path = weights_dir / "stylegan2.engine"
+    onnx_path = weights_dir / "stylegan2.onnx"
+    if engine_path.exists() and trt is not None:
+        logging.info("Loading TensorRT generator from %s", engine_path)
+        return TRTGenerator(engine_path)
+    if onnx_path.exists() and ort is not None:
+        logging.info("Loading ONNX generator from %s", onnx_path)
+        return OnnxGenerator(onnx_path, device)
+    return get_stylegan_generator(weights_dir).to(device)
+
+
+def load_e4e(weights_dir: Path, device: torch.device):
+    engine_path = weights_dir / "e4e.engine"
+    onnx_path = weights_dir / "e4e.onnx"
+    if engine_path.exists() and trt is not None:
+        logging.info("Loading TensorRT encoder from %s", engine_path)
+        return TRTEncoder(engine_path)
+    if onnx_path.exists() and ort is not None:
+        logging.info("Loading ONNX encoder from %s", onnx_path)
+        return OnnxEncoder(onnx_path, device)
+    return get_e4e_encoder(weights_dir).to(device)
+
+
 class ModelManager:
     """Manage ML models used by the application."""
 
@@ -243,9 +450,33 @@ class ModelManager:
         """
         self.weights_dir = weights_dir
         self.device = device
-        self.G = get_stylegan_generator(weights_dir).to(device)
-        self.E = get_e4e_encoder(weights_dir).to(device)
-        self.latent_dirs = get_latent_directions(weights_dir)
+        self.model_load_failed = False
+        self.error_message = ""
+        try:
+            self.G = load_stylegan(weights_dir, device)
+        except Exception as e:  # noqa: BLE001 - runtime
+            logging.exception("Failed to load StyleGAN: %s", e)
+            self.G = None
+            self.model_load_failed = True
+            self.error_message += f"StyleGAN: {e}"
+        try:
+            self.E = load_e4e(weights_dir, device)
+        except Exception as e:  # noqa: BLE001 - runtime
+            logging.exception("Failed to load e4e encoder: %s", e)
+            self.E = None
+            self.model_load_failed = True
+            if self.error_message:
+                self.error_message += "; "
+            self.error_message += f"e4e: {e}"
+        try:
+            self.latent_dirs = get_latent_directions(weights_dir)
+        except Exception as e:  # noqa: BLE001 - runtime
+            logging.exception("Failed to load latent directions: %s", e)
+            self.latent_dirs = {}
+            self.model_load_failed = True
+            if self.error_message:
+                self.error_message += "; "
+            self.error_message += f"directions: {e}"
 
     def check_orthogonality(self) -> None:
         """Log dot products of key latent directions for debugging."""
@@ -296,6 +527,7 @@ class _EyeTracker:
         self.canonical = np.array(canonical or [[80.0, 100.0], [176.0, 100.0]], dtype=np.float32)
         self.left_eye: tuple[int, int] | None = None
         self.right_eye: tuple[int, int] | None = None
+        self.gaze_norm: tuple[float, float] | None = None
 
     def get_eyes(self, frame_bgr: np.ndarray) -> tuple[tuple[int, int], tuple[int, int]] | None:
         """Return smoothed eye coordinates from a BGR frame.
@@ -330,7 +562,15 @@ class _EyeTracker:
                 int(self.alpha * re[0] + (1 - self.alpha) * self.right_eye[0]),
                 int(self.alpha * re[1] + (1 - self.alpha) * self.right_eye[1]),
             )
+        self.gaze_norm = (
+            ((self.left_eye[0] + self.right_eye[0]) / 2) / w,
+            ((self.left_eye[1] + self.right_eye[1]) / 2) / h,
+        )
         return self.left_eye, self.right_eye
+
+    def get_gaze(self) -> tuple[float, float] | None:
+        """Return last normalized gaze coordinates if available."""
+        return self.gaze_norm
 
 
 def _to_tensor(img: np.ndarray) -> torch.Tensor:
@@ -373,6 +613,7 @@ class VideoProcessor:
         telemetry: "TelemetryClient | None" = None,
         demo: bool = False,
         low_power: bool = False,
+        audio: "AudioProcessor | None" = None,
     ) -> None:
         """Create a new processor instance.
 
@@ -385,6 +626,7 @@ class VideoProcessor:
             ui: ``"cv2"`` or ``"qt"`` user interface backend.
             telemetry: Optional telemetry client for heartbeats.
             low_power: Enable adaptive resolution and frame skipping.
+            audio: Optional :class:`AudioProcessor` providing live volume.
         """
         self.model_manager = model_manager
         self.config = config
@@ -395,6 +637,7 @@ class VideoProcessor:
         self.telemetry = telemetry
         self.demo = demo
         self.low_power = low_power
+        self.audio = audio
         self.demo_frames: list[Path] = []
         self._demo_index = 0
         if self.demo:
@@ -428,11 +671,24 @@ class VideoProcessor:
         self._direction_lock = Lock()
         self.command_queue: SimpleQueue[Direction] = SimpleQueue()
         self.active_direction = Direction.BLEND
+        self.gaze_mode = self.config.data.get("gaze_mode", False)
+        self._gaze_last: Direction | None = None
+        self._gaze_map = {
+            (0, 0): Direction.AGE,
+            (1, 0): Direction.GENDER,
+            (0, 1): Direction.ETHNICITY,
+            (1, 1): Direction.SPECIES,
+        }
         self._last_affine: np.ndarray | None = None
         self._encode_durations: list[float] = []
         self.encode_fps = 0.0
         self._skip_next = False
         self.target_fps = self.config.data.get("fps", 15)
+        self.frame_timer = FrameTimer(self.config.data.get("metrics_interval", 10))
+
+        self.xy_offset = np.zeros(512)
+        self.xy_dir_x = Direction.AGE
+        self.xy_dir_y = Direction.GENDER
 
         self._apply_config()
 
@@ -452,6 +708,7 @@ class VideoProcessor:
                 eye_cfg.get("right_eye", [176.0, 100.0]),
             ]
             self.tracker.canonical = np.array(canonical, dtype=np.float32)
+        self.gaze_mode = self.config.data.get("gaze_mode", False)
         self.target_fps = self.config.data.get("fps", 15)
         emotion = self.config.data.get("active_emotion")
         if emotion:
@@ -464,12 +721,15 @@ class VideoProcessor:
     # ------------------------------------------------------------------
     # Core latent helpers
     # ------------------------------------------------------------------
-    def encode_face(self, frame: np.ndarray) -> torch.Tensor:
+    def encode_face(
+        self, frame: np.ndarray, eyes: tuple[tuple[int, int], tuple[int, int]] | None = None
+    ) -> torch.Tensor:
         """Encode the current frame into latent ``w+`` space."""
         start = time()
         with log_timing("encode_face"):
             with self.tracker_lock:
-                eyes = self.tracker.get_eyes(frame)
+                if eyes is None:
+                    eyes = self.tracker.get_eyes(frame)
             if eyes is None:
                 crop = cv2.resize(frame, (256, 256))
                 M = None
@@ -554,7 +814,10 @@ class VideoProcessor:
             max_mag = self.max_magnitudes.get(active.value, 3.0)
 
         current_magnitude = raw_amt * max_mag
-        return current_magnitude * direction, current_magnitude
+        if getattr(self, "audio", None):
+            current_magnitude *= 1.0 + float(getattr(self.audio, "volume", 0.0))
+        offset = current_magnitude * direction + self.xy_offset
+        return offset, current_magnitude
 
     def _send_mqtt_heartbeat(self) -> None:
         if self.telemetry:
@@ -563,6 +826,7 @@ class VideoProcessor:
     def _handle_camera_error(
         self,
         frame_emitter: "pyqtSignal" | None,
+        preview_emitter: "pyqtSignal" | None,
         retry_delay: float,
         max_delay: float,
     ) -> float:
@@ -580,6 +844,9 @@ class VideoProcessor:
 
         if self.ui == "qt" and frame_emitter:
             frame_emitter.emit(_numpy_to_qimage(error_frame))
+            if preview_emitter:
+                thumb = cv2.resize(error_frame, (160, 160))
+                preview_emitter.emit(_numpy_to_qimage(thumb))
         else:
             cv2.imshow("Latent Self", error_frame)
             cv2.waitKey(1)
@@ -602,17 +869,27 @@ class VideoProcessor:
         """Process a single frame and return augmented output."""
 
         now = time()
-        if baseline_latent is None or (now - last_encode) > self.REENCODE_INTERVAL_S:
-            baseline_latent = self.encode_face(frame)
-            last_encode = now
-            logging.info("Encoded new baseline latent.")
+        with self.tracker_lock:
+            eyes = self.tracker.get_eyes(frame)
+            gaze = self.tracker.get_gaze()
 
-        offset, current_magnitude = self.latent_offset(now)
-        latent_mod = baseline_latent + torch.from_numpy(offset).to(self.device)
-        out_frame = self.decode_latent(latent_mod, (frame.shape[0], frame.shape[1]))
+        if self.model_manager.model_load_failed:
+            out_frame = frame.copy()
+            current_magnitude = 0.0
+        else:
+            if self.gaze_mode and gaze is not None:
+                self._update_direction_from_gaze(gaze)
 
-        eyes = self.tracker.left_eye, self.tracker.right_eye
-        if eyes[0] is not None and eyes[1] is not None:
+            if baseline_latent is None or (now - last_encode) > self.REENCODE_INTERVAL_S:
+                baseline_latent = self.encode_face(frame, eyes)
+                last_encode = now
+                logging.info("Encoded new baseline latent.")
+
+            offset, current_magnitude = self.latent_offset(now)
+            latent_mod = baseline_latent + torch.from_numpy(offset).to(self.device)
+            out_frame = self.decode_latent(latent_mod, (frame.shape[0], frame.shape[1]))
+
+        if eyes is not None:
             idle_frames = 0
             cv2.circle(out_frame, eyes[0], 3, (0, 255, 0), -1)
             cv2.circle(out_frame, eyes[1], 3, (0, 255, 0), -1)
@@ -625,6 +902,7 @@ class VideoProcessor:
         self,
         out_frame: np.ndarray,
         frame_emitter: "pyqtSignal" | None,
+        preview_emitter: "pyqtSignal" | None,
         current_magnitude: float,
         idle_frames: int,
         idle_threshold: int,
@@ -633,6 +911,8 @@ class VideoProcessor:
         """Render the frame via Qt or OpenCV."""
 
         self._draw_hud(out_frame, current_magnitude)
+        if self.model_manager.model_load_failed:
+            self._draw_model_error(out_frame)
 
         self._apply_idle_overlay(out_frame, idle_frames, idle_threshold, fade_frames)
 
@@ -640,6 +920,12 @@ class VideoProcessor:
             from PyQt6.QtCore import QThread
 
             frame_emitter.emit(_numpy_to_qimage(out_frame))
+            if preview_emitter:
+                now = time()
+                if not hasattr(self, "_last_preview") or (now - self._last_preview) > 0.5:
+                    thumb = cv2.resize(out_frame, (160, 160))
+                    preview_emitter.emit(_numpy_to_qimage(thumb))
+                    self._last_preview = now
             QThread.msleep(int(1000 / self.config.data["fps"]))
             return True
 
@@ -660,6 +946,24 @@ class VideoProcessor:
             cv2.FONT_HERSHEY_SIMPLEX,
             0.7,
             (255, 255, 255),
+            2,
+            cv2.LINE_AA,
+        )
+
+    def _draw_model_error(self, frame: np.ndarray) -> None:
+        """Display a warning when models failed to load."""
+
+        text = "Models failed to load"
+        (w, h), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1.0, 2)
+        x = (frame.shape[1] - w) // 2
+        y = h + 10
+        cv2.putText(
+            frame,
+            text,
+            (x, y),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1.0,
+            (0, 0, 255),
             2,
             cv2.LINE_AA,
         )
@@ -739,7 +1043,11 @@ class VideoProcessor:
         else:
             logging.error("Failed to open camera at index %s", self.camera_index)
 
-    def _process_stream(self, frame_emitter: "pyqtSignal" | None = None) -> None:
+    def _process_stream(
+        self,
+        frame_emitter: "pyqtSignal" | None = None,
+        preview_emitter: "pyqtSignal" | None = None,
+    ) -> None:
         """Main loop orchestrating capture, processing and display.
 
         This loop delegates camera retries, frame processing and UI drawing to
@@ -772,6 +1080,7 @@ class VideoProcessor:
                         if not self._display_frame(
                             last_out_frame,
                             frame_emitter,
+                            preview_emitter,
                             last_current_magnitude,
                             idle_frames,
                             idle_threshold,
@@ -781,7 +1090,12 @@ class VideoProcessor:
                     continue
 
                 if not self.camera_available:
-                    retry_delay = self._handle_camera_error(frame_emitter, retry_delay, max_delay)
+                    retry_delay = self._handle_camera_error(
+                        frame_emitter,
+                        preview_emitter,
+                        retry_delay,
+                        max_delay,
+                    )
                     continue
 
                 ret, frame = self._get_frame()
@@ -790,17 +1104,21 @@ class VideoProcessor:
                     self.camera_available = False
                     continue
 
-                (
-                    out_frame,
-                    baseline_latent,
-                    last_encode,
-                    idle_frames,
-                    current_magnitude,
-                ) = self._process_frame(frame, baseline_latent, last_encode, idle_frames)
+                with self.frame_timer.track():
+                    (
+                        out_frame,
+                        baseline_latent,
+                        last_encode,
+                        idle_frames,
+                        current_magnitude,
+                    ) = self._process_frame(
+                        frame, baseline_latent, last_encode, idle_frames
+                    )
                 
                 if not self._display_frame(
                     out_frame,
                     frame_emitter,
+                    preview_emitter,
                     current_magnitude,
                     idle_frames,
                     idle_threshold,
@@ -817,10 +1135,18 @@ class VideoProcessor:
                 cv2.destroyAllWindows()
 
     # Public control -----------------------------------------------------
-    def start(self, frame_emitter: "pyqtSignal" | None = None) -> None:
+    def start(
+        self,
+        frame_emitter: "pyqtSignal" | None = None,
+        preview_emitter: "pyqtSignal" | None = None,
+    ) -> None:
         """Begin processing the camera stream in a background thread."""
         self.stop_event.clear()
-        self._processing_thread = Thread(target=self._process_stream, args=(frame_emitter,), daemon=True)
+        self._processing_thread = Thread(
+            target=self._process_stream,
+            args=(frame_emitter, preview_emitter),
+            daemon=True,
+        )
         self._processing_thread.start()
 
     def join(self) -> None:
@@ -840,12 +1166,43 @@ class VideoProcessor:
             direction = Direction.from_str(direction)
         self.command_queue.put(direction)
 
+    def update_xy_control(
+        self,
+        x: float,
+        y: float,
+        dir_x: Direction,
+        dir_y: Direction,
+    ) -> None:
+        """Set manual XY offset based on widget input."""
+        vec_x = self.model_manager.latent_dirs.get(dir_x.value)
+        vec_y = self.model_manager.latent_dirs.get(dir_y.value)
+        if vec_x is None or vec_y is None:
+            self.xy_offset = np.zeros(512)
+            return
+        mag_x = self.max_magnitudes.get(dir_x.value, 3.0)
+        mag_y = self.max_magnitudes.get(dir_y.value, 3.0)
+        self.xy_dir_x = dir_x
+        self.xy_dir_y = dir_y
+        self.xy_offset = x * mag_x * vec_x + y * mag_y * vec_y
+
     def _drain_direction_queue(self) -> None:
         """Apply any queued direction changes."""
         while not self.command_queue.empty():
             new_dir = self.command_queue.get_nowait()
             with self._direction_lock:
                 self.active_direction = new_dir
+
+    def _update_direction_from_gaze(self, gaze: tuple[float, float]) -> None:
+        """Set direction based on normalized gaze coordinates."""
+        region = (
+            1 if gaze[0] >= 0.5 else 0,
+            1 if gaze[1] >= 0.5 else 0,
+        )
+        direction = self._gaze_map.get(region)
+        if direction and direction != self._gaze_last:
+            with self._direction_lock:
+                self.active_direction = direction
+            self._gaze_last = direction
 
     def get_active_direction(self) -> Direction:
         """Return the currently active morphing direction."""
@@ -936,13 +1293,33 @@ class TelemetryClient:
                 logging.warning("MQTT cleanup failed: %s", e)
 
 class MemoryMonitor:
-    """Background memory usage monitor."""
+    """Background memory usage monitor.
+
+    When ``live_memory_stats`` is enabled and PyQt6 is available, the
+    :attr:`memory_update` signal periodically emits the current CPU and GPU
+    usage in megabytes and gigabytes respectively.
+    """
 
     def __init__(self, config: ConfigManager) -> None:
         """Create a memory monitor from configuration values."""
         self.interval = config.data.get("memory_check_interval", 10)
         self.max_cpu_mb = config.data.get("max_cpu_mem_mb")
         self.max_gpu_gb = config.data.get("max_gpu_mem_gb")
+        self.emit_signals = config.data.get("live_memory_stats", False)
+        self.emitter = None
+        self.memory_update = None
+        if self.emit_signals:
+            try:
+                from PyQt6.QtCore import QObject, pyqtSignal
+
+                class _Emitter(QObject):
+                    memory_update = pyqtSignal(float, float)
+
+                self.emitter = _Emitter()
+                self.memory_update = self.emitter.memory_update
+            except Exception as e:  # pragma: no cover - optional feature
+                logging.warning("Live memory stats disabled: %s", e)
+                self.emit_signals = False
         self._stop = Event()
         self._thread: Thread | None = None
 
@@ -969,6 +1346,8 @@ class MemoryMonitor:
             if self.max_gpu_gb and gpu_gb > self.max_gpu_gb:
                 logging.warning("GPU memory usage %.2f GB exceeds limit %s", gpu_gb, self.max_gpu_gb)
             logging.debug("Memory usage: CPU %.1f MB | GPU %.2f GB", cpu_mb, gpu_gb)
+            if self.emit_signals and self.memory_update:
+                self.memory_update.emit(cpu_mb, gpu_gb)
             self._stop.wait(self.interval)
 
     def stop(self) -> None:
@@ -978,4 +1357,104 @@ class MemoryMonitor:
             self._stop.set()
             if self._thread:
                 self._thread.join()
+
+
+class AudioProcessor:
+    """Capture microphone volume in a background thread."""
+
+    def __init__(self) -> None:
+        self.volume = 0.0
+        self._stop = Event()
+        self._thread: Thread | None = None
+        if not SOUNDDEVICE_AVAILABLE:
+            logging.warning("sounddevice not available; audio reactivity disabled")
+            self._enabled = False
+        else:
+            self._enabled = True
+
+    def start(self) -> None:
+        """Start the audio capture thread if possible."""
+
+        if not self._enabled or self._thread:
+            return
+        self._thread = Thread(target=self._run, daemon=True)
+        self._thread.start()
+
+    def _run(self) -> None:
+        if not self._enabled or sd is None:
+            return
+        try:
+            with sd.InputStream(channels=1, callback=self._callback):
+                while not self._stop.is_set():
+                    self._stop.wait(0.1)
+        except Exception as e:  # pragma: no cover - optional feature
+            logging.warning("AudioProcessor failed: %s", e)
+            self._enabled = False
+
+    def _callback(self, indata, frames, time_info, status) -> None:
+        if status:
+            logging.debug("Audio status: %s", status)
+        try:
+            rms = float(np.sqrt(np.mean(indata**2)))
+            self.volume = max(0.0, min(1.0, rms * 10))
+        except Exception:
+            self.volume = 0.0
+
+    def stop(self) -> None:
+        """Stop the audio thread."""
+
+        if not self._stop.is_set():
+            self._stop.set()
+            if self._thread:
+                self._thread.join()
+
+
+class PresetScheduler:
+    """Schedule preset or model changes using APScheduler."""
+
+    def __init__(self, config: "ConfigManager", app: "LatentSelf") -> None:
+        self.config = config
+        self.app = app
+        self.scheduler = BackgroundScheduler()
+
+    def start(self) -> None:
+        """Start the scheduler with current jobs."""
+        self.reload_jobs()
+        self.scheduler.start()
+
+    def shutdown(self) -> None:
+        """Stop the scheduler."""
+        self.scheduler.shutdown(wait=False)
+
+    def reload_jobs(self) -> None:
+        """Reload scheduled jobs from configuration."""
+        self.scheduler.remove_all_jobs()
+        for entry in self.config.data.get("schedule", []):
+            time_str = entry.get("time")
+            if not time_str:
+                continue
+            try:
+                t = datetime.strptime(time_str, "%H:%M")
+            except ValueError:
+                logging.warning("Invalid schedule time format: %s", time_str)
+                continue
+            self.scheduler.add_job(
+                self._apply_entry,
+                CronTrigger(hour=t.hour, minute=t.minute),
+                args=[entry],
+            )
+
+    def _apply_entry(self, entry: dict) -> None:
+        preset = entry.get("preset")
+        model = entry.get("model")
+        if preset:
+            try:
+                self.config.load_preset(preset)
+            except Exception as exc:  # noqa: BLE001 - runtime
+                logging.error("Failed to load preset %s: %s", preset, exc)
+        if model:
+            try:
+                self.app.reload_models(Path(model))
+            except Exception as exc:  # noqa: BLE001 - runtime
+                logging.error("Failed to load model from %s: %s", model, exc)
 

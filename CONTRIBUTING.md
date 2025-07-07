@@ -5,8 +5,13 @@ Thank you for considering contributing! We welcome pull requests and issues.
 ## Development Setup
 1. Install Python 3.11 and create a virtual environment.
 2. Install the project dependencies and optional development tools. If you plan to run tests, install `requirements-test.txt` as well.
-3. Run `python -m py_compile latent_self.py ui/*.py` before committing.
-4. Execute tests with `pytest`.
+3. Install `pre-commit` and initialise the git hook:
+   ```bash
+   pip install pre-commit
+   pre-commit install
+   ```
+4. Run `python -m py_compile latent_self.py ui/*.py` before committing.
+5. Execute tests with `pytest`.
 
 ## Dependency Installation
 Activate your virtual environment and install all Python requirements:
@@ -19,7 +24,7 @@ For linting, type checking, documentation, and packaging you may also install
 the optional development tools used in CI:
 
 ```bash
-pip install mypy ruff mkdocs mkdocs-material pyinstaller
+pip install mypy ruff black pre-commit mkdocs mkdocs-material pyinstaller
 ```
 
 ## Test Dependencies
@@ -31,6 +36,13 @@ pip install -r requirements.txt -r requirements-test.txt
 
 The tools listed above (`mypy`, `ruff`, `mkdocs`, `mkdocs-material`,
 `pyinstaller`) are optional for running the tests but are installed in CI.
+
+## Using pre-commit
+With the hook installed you can run all style and type checks locally:
+
+```bash
+pre-commit run --all-files
+```
 
 ## Running Tests
 To execute the unit tests run from the repository root:
@@ -68,6 +80,7 @@ suite, so they do not need to be installed.
 ## Pull Request Checklist
 - [ ] Tests pass (`pytest`)
 - [ ] `python -m py_compile latent_self.py ui/*.py`
+- [ ] `pre-commit` checks
 - [ ] Updated documentation or comments
 - [ ] Updated `tasks.yml` statuses
 

@@ -17,6 +17,8 @@ Latent Self is an interactive art installation that uses a webcam to capture a u
 *   MQTT heartbeat for remote monitoring
 *   Typed configuration via **pydantic-settings**
 *   Demo mode with prerecorded media (`--demo`)
+*   Optional live memory usage readout in the admin panel
+*   Periodic logging of average FPS and latency metrics
 
 ## Installation
 
@@ -39,6 +41,12 @@ This project requires the following model weights:
 * [`latent_directions.npz`](https://raw.githubusercontent.com/genforce/interfacegan/master/boundaries/latent_directions_ffhq.npz) – W⁺ latent directions (age, gender, smile)
 
 Place these files in a `models` directory in the project root.
+
+To speed up inference you can convert the generator and encoder to ONNX or TensorRT:
+```bash
+python scripts/convert_models.py --weights models --out models --tensorrt
+```
+ModelManager will automatically load `*.onnx` or `*.engine` files if present.
 
 ## Admin Password
 
@@ -95,6 +103,12 @@ python latent_self.py -h
 
 See the [User Manual](USER_MANUAL.md) for detailed setup and the
 [Troubleshooting Guide](docs/troubleshooting.md) for common issues.
+
+## Metrics Output
+
+The application logs average FPS and frame latency every few seconds. Adjust
+`metrics_interval` in `config.yaml` to control how often these statistics are
+emitted.
 
 ![Admin Controls](https://via.placeholder.com/800x400.png?text=Admin+Controls)
 
