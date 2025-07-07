@@ -620,3 +620,10 @@ PHASE_T_BACKLOG:
     tags: [monitoring, performance]
     priority: P3
     status: done
+
+  - id: 212
+    title: Restore docs images from base64
+    desc: Add `scripts/decode_images.py` to regenerate PNG/GIF assets for MkDocs.
+    tags: [docs, tooling]
+    priority: P5
+    status: done

@@ -125,7 +125,8 @@ b - blended morph
 ## Demo
 
 ![Demo GIF](docs/images/demo.gif)
-(If the image fails to load, run `python scripts/capture_screenshots.py` to generate it.)
+(If the image fails to load, run `python scripts/decode_images.py` to restore it or
+`python scripts/capture_screenshots.py` to regenerate.)
 
 To try the application without a webcam, place a `demo.mp4` file or a folder of
 images inside the `data/` directory and run with `--demo`.
@@ -146,5 +147,15 @@ The application logs average FPS and frame latency every few seconds. Adjust
 emitted.
 
 ![Admin Controls](docs/images/admin_controls.png)
-(Generate with `python scripts/capture_screenshots.py` if missing.)
+(If the image is missing, run `python scripts/decode_images.py` or
+`python scripts/capture_screenshots.py`.)
+
+## Building the Documentation
+
+The docs site is built with **MkDocs**. To preview it locally:
+
+```bash
+python scripts/decode_images.py  # restore PNG/GIF assets
+mkdocs serve
+```
 

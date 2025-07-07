@@ -17,6 +17,7 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install mkdocs mkdocs-material
+      - run: python scripts/decode_images.py
       - run: mkdocs build --strict
       - uses: lycheeverse/lychee-action@v1
         with:
