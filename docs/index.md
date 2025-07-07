@@ -6,4 +6,5 @@ Welcome to the Latent Self documentation site.
 - [User Manual](user_manual.md)
 - [Troubleshooting](troubleshooting.md)
 
-![Admin Controls](https://via.placeholder.com/800x400.png?text=Admin+Controls)
+![Admin Controls](images/admin_controls.png)
+(If the image doesn't render, run `python scripts/decode_images.py`.)
