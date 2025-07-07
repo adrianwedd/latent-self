@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
 )
 from werkzeug.security import check_password_hash
+from password_utils import hash_password
 
 class AdminDialog(QDialog):
     """A dialog for adjusting application settings."""
@@ -34,15 +35,50 @@ class AdminDialog(QDialog):
         self._setup_ui()
 
     def _check_password(self) -> bool:
-        """Prompt for password and check against hash in config."""
-        password, ok = QInputDialog.getText(self, "Password Required", "Enter admin password:", QInputDialog.EchoMode.Password)
+        """Prompt for password or set a new one if none is configured."""
+        password_hash = self.app.config.data.get("admin_password_hash")
+        if not password_hash:
+            return self._set_new_password()
+
+        password, ok = QInputDialog.getText(
+            self,
+            "Password Required",
+            "Enter admin password:",
+            QInputDialog.EchoMode.Password,
+        )
         if not ok:
             return False
 
-        password_hash = self.app.config.data.get("admin_password_hash")
-        if not password_hash or not check_password_hash(password_hash, password):
+        if not check_password_hash(password_hash, password):
             QMessageBox.warning(self, "Authentication Failed", "Incorrect password.")
             return False
+        return True
+
+    def _set_new_password(self) -> bool:
+        """Prompt the user to choose an admin password and store the hash."""
+        pwd, ok = QInputDialog.getText(
+            self,
+            "Set Admin Password",
+            "Create a new admin password:",
+            QInputDialog.EchoMode.Password,
+        )
+        if not ok or not pwd:
+            QMessageBox.warning(self, "Password Required", "A password is required to access the admin panel.")
+            return False
+
+        confirm, ok = QInputDialog.getText(
+            self,
+            "Confirm Password",
+            "Re-enter the password:",
+            QInputDialog.EchoMode.Password,
+        )
+        if not ok or pwd != confirm:
+            QMessageBox.warning(self, "Mismatch", "Passwords did not match.")
+            return False
+
+        self.app.config.data["admin_password_hash"] = hash_password(pwd)
+        with self.app.config.config_path.open("w") as f:
+            yaml.dump(self.app.config.data, f, default_flow_style=False)
         return True
 
     def _setup_ui(self) -> None:
