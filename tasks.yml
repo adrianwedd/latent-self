@@ -577,7 +577,7 @@ PHASE_T_BACKLOG:
     desc: Receive Open Sound Control messages to adjust morphing parameters.
     tags: [integration, osc]
     priority: P3
-    status: pending
+    status: done
 
   - id: 206
     title: Develop a Graceful Model Loading Failure Mode

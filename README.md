@@ -77,6 +77,22 @@ The server listens on port **8001** by default and exposes three endpoints:
 If `admin_password_hash` is set in `config.yaml`, Basic Auth credentials are
 required to access these routes.
 
+## OSC Control
+
+Enable the OSC server by setting `osc.enabled: true` in `config.yaml`.
+It listens on port `9000` by default and accepts the following messages:
+
+* `/direction` – switch to a specific direction (e.g. `AGE`, `SMILE`)
+* `/blend/<name>` – set blend weight for a direction (`0.0`–`1.0`)
+* `/cycle_duration` – update morph cycle length in seconds
+
+Example using `oscsend`:
+
+```bash
+oscsend localhost 9000 /direction s "SMILE"
+oscsend localhost 9000 /blend/age f 0.5
+```
+
 ## Usage
 
 ```bash
