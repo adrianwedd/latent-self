@@ -32,6 +32,7 @@ class DummyProcessor:
             Direction.GENDER.value: np.full(2, 2.0),
         })
         self._direction_lock = Lock()
+        self.audio = types.SimpleNamespace(volume=0.0)
 
 def test_magnitude_range():
     proc = DummyProcessor()
@@ -62,4 +63,13 @@ def test_blend_mode():
     offset, mag = VideoProcessor.latent_offset(proc, t_half)
     assert mag == 3.0
     assert np.allclose(offset, expected_dir * 3.0)
+
+
+def test_audio_modulates_magnitude():
+    proc = DummyProcessor()
+    proc.audio.volume = 0.5
+    t_half = proc.cycle_seconds / 2
+    offset, mag = VideoProcessor.latent_offset(proc, t_half)
+    assert mag == 3.0 * 1.5
+    assert np.allclose(offset, np.ones(2) * 3.0 * 1.5)
 

@@ -541,7 +541,7 @@ PHASE_T_BACKLOG:
     desc: Use microphone input to drive latent offset magnitude in real time.
     tags: [core, feature]
     priority: P3
-    status: pending
+    status: done
 
   - id: 201
     title: Optimize Models with ONNX or TensorRT

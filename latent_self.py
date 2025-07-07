@@ -62,6 +62,7 @@ from services import (
     TelemetryClient,
     asset_path,
     MemoryMonitor,
+    AudioProcessor,
     select_torch_device,
 )
 
@@ -142,6 +143,7 @@ class LatentSelf:
         self.model_manager = model_manager or ModelManager(weights_dir, self.device)
         self.telemetry = telemetry or TelemetryClient(config)
         self.low_power = low_power
+        self.audio = AudioProcessor()
         self.video = video_processor or VideoProcessor(
             self.model_manager,
             config,
@@ -152,6 +154,7 @@ class LatentSelf:
             self.telemetry,
             demo,
             low_power,
+            self.audio,
         )
 
         self.memory = MemoryMonitor(config)
@@ -162,6 +165,7 @@ class LatentSelf:
         """Start the application UI and processing loop."""
         logging.info("Starting Latent Self…")
         self.memory.start()
+        self.audio.start()
         if self._start_web_admin:
             try:
                 from web_admin import WebAdmin
@@ -190,6 +194,7 @@ class LatentSelf:
             if self.telemetry:
                 self.telemetry.shutdown()
             self.model_manager.unload()
+            self.audio.stop()
             self.memory.stop()
             logging.info("Application shut down gracefully.")
 

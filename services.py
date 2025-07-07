@@ -59,6 +59,13 @@ except ImportError:  # pragma: no cover - optional feature
     mqtt = None
     MQTT_AVAILABLE = False
 
+try:
+    import sounddevice as sd
+    SOUNDDEVICE_AVAILABLE = True
+except Exception:  # pragma: no cover - optional feature
+    sd = None
+    SOUNDDEVICE_AVAILABLE = False
+
 
 # ---------------------------------------------------------------------------
 # Utility helpers
@@ -572,6 +579,7 @@ class VideoProcessor:
         telemetry: "TelemetryClient | None" = None,
         demo: bool = False,
         low_power: bool = False,
+        audio: "AudioProcessor | None" = None,
     ) -> None:
         """Create a new processor instance.
 
@@ -584,6 +592,7 @@ class VideoProcessor:
             ui: ``"cv2"`` or ``"qt"`` user interface backend.
             telemetry: Optional telemetry client for heartbeats.
             low_power: Enable adaptive resolution and frame skipping.
+            audio: Optional :class:`AudioProcessor` providing live volume.
         """
         self.model_manager = model_manager
         self.config = config
@@ -594,6 +603,7 @@ class VideoProcessor:
         self.telemetry = telemetry
         self.demo = demo
         self.low_power = low_power
+        self.audio = audio
         self.demo_frames: list[Path] = []
         self._demo_index = 0
         if self.demo:
@@ -766,6 +776,8 @@ class VideoProcessor:
             max_mag = self.max_magnitudes.get(active.value, 3.0)
 
         current_magnitude = raw_amt * max_mag
+        if getattr(self, "audio", None):
+            current_magnitude *= 1.0 + float(getattr(self.audio, "volume", 0.0))
         return current_magnitude * direction, current_magnitude
 
     def _send_mqtt_heartbeat(self) -> None:
@@ -1252,6 +1264,56 @@ class MemoryMonitor:
 
     def stop(self) -> None:
         """Stop the monitoring thread."""
+
+        if not self._stop.is_set():
+            self._stop.set()
+            if self._thread:
+                self._thread.join()
+
+
+class AudioProcessor:
+    """Capture microphone volume in a background thread."""
+
+    def __init__(self) -> None:
+        self.volume = 0.0
+        self._stop = Event()
+        self._thread: Thread | None = None
+        if not SOUNDDEVICE_AVAILABLE:
+            logging.warning("sounddevice not available; audio reactivity disabled")
+            self._enabled = False
+        else:
+            self._enabled = True
+
+    def start(self) -> None:
+        """Start the audio capture thread if possible."""
+
+        if not self._enabled or self._thread:
+            return
+        self._thread = Thread(target=self._run, daemon=True)
+        self._thread.start()
+
+    def _run(self) -> None:
+        if not self._enabled or sd is None:
+            return
+        try:
+            with sd.InputStream(channels=1, callback=self._callback):
+                while not self._stop.is_set():
+                    self._stop.wait(0.1)
+        except Exception as e:  # pragma: no cover - optional feature
+            logging.warning("AudioProcessor failed: %s", e)
+            self._enabled = False
+
+    def _callback(self, indata, frames, time_info, status) -> None:
+        if status:
+            logging.debug("Audio status: %s", status)
+        try:
+            rms = float(np.sqrt(np.mean(indata**2)))
+            self.volume = max(0.0, min(1.0, rms * 10))
+        except Exception:
+            self.volume = 0.0
+
+    def stop(self) -> None:
+        """Stop the audio thread."""
 
         if not self._stop.is_set():
             self._stop.set()
