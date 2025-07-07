@@ -2,19 +2,24 @@
 
 This guide walks you through installing Latent Self, adjusting its configuration and resolving common issues.
 
-## Installation
+## Installation and Setup
 
 1. Clone the repository:
    ```bash
    git clone https://github.com/your-username/latent-self.git
    cd latent-self
    ```
-2. Install the Python dependencies:
+2. Ensure you have **Python 3.11** installed and create a virtual environment:
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   ```
+3. Install the Python dependencies:
    ```bash
    pip install -r requirements.txt
    ```
-3. Download the required model weights (StyleGAN generator, e4e encoder and `latent_directions.npz`) and place them inside the `models/` directory.
-4. (Optional) Build a standalone executable with PyInstaller:
+4. Download the required model weights (StyleGAN generator, e4e encoder and `latent_directions.npz`) and place them inside the `models/` directory.
+5. (Optional) Build a standalone executable with PyInstaller:
    ```bash
    pyinstaller latent_self.spec
    ```
@@ -34,6 +39,55 @@ Key options include:
 
 You can also edit the YAML file directly or override values via CLI arguments.
 
+## UI Controls
+
+### OpenCV Window
+
+The default OpenCV UI accepts single-key shortcuts:
+
+```
+q - quit
+y - age
+g - gender
+h - smile
+e - ethnicity
+s - species
+u - beauty
+1 - happy
+2 - angry
+3 - sad
+4 - fear
+5 - disgust
+6 - surprise
+b - blended morph
+```
+
+### Qt Mirror
+
+When running with `--ui qt`, press **F12** to open the admin panel. Use **Q** or
+**Esc** to quit. The same direction keys as above apply.
+
+## Command-Line Options
+
+Important flags (run `python latent_self.py -h` for the full list):
+
+| Option | Description |
+|--------|-------------|
+| `--camera N` | Select webcam index |
+| `--resolution PX` | Frame size (square pixels) |
+| `--fps N` | Target frames per second |
+| `--cuda` | Use CUDA if available |
+| `--low-power` | Adaptive frame dropping |
+| `--demo` | Use prerecorded media from `data/` |
+| `--ui {cv2,qt}` | UI backend |
+| `--kiosk` | Hide cursor and launch fullscreen (Qt only) |
+| `--cycle-duration SECS` | Duration of a morph cycle |
+| `--blend-age WEIGHT` | Age blend weight |
+| `--blend-gender WEIGHT` | Gender blend weight |
+| `--blend-smile WEIGHT` | Smile blend weight |
+| `--blend-species WEIGHT` | Species blend weight |
+| `--emotion NAME` | Starting emotion |
+
 ## Common Issues
 
 **Camera not detected**
@@ -49,5 +103,15 @@ You can also edit the YAML file directly or override values via CLI arguments.
 : Running on CPU can be slow. Install CUDA drivers and use `--cuda` to enable GPU acceleration.
 
 ![Admin Controls](https://via.placeholder.com/800x400.png?text=Admin+Controls)
+
+## Demo
+
+You can preview the experience without a webcam by running in demo mode:
+
+```bash
+python latent_self.py --demo
+```
+
+![Demo GIF](https://via.placeholder.com/600x400.gif?text=Demo+GIF)
 
 For additional help see the [project documentation](DOCS.md).
