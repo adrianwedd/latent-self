@@ -654,3 +654,11 @@ PHASE_T_BACKLOG:
     tags: [docs]
     priority: P3
     status: pending
+
+  - id: 217
+    title: Add API token authentication for WebAdmin
+    desc: Require requests to include `X-Admin-Token` matching `admin_api_token` in config.
+    tags: [security, admin]
+    priority: P3
+    status: done
+

@@ -277,6 +277,11 @@
       "title": "Admin Password Hash",
       "type": "string"
     },
+    "admin_api_token": {
+      "default": "",
+      "title": "Admin API Token",
+      "type": "string"
+    },
     "mqtt": {
       "$ref": "#/$defs/MQTTConfig"
     },

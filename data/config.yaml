@@ -28,6 +28,7 @@ live_memory_stats: false
 # -- Admin Panel --
 # Generate a hash using `python scripts/generate_password_hash.py`
 admin_password_hash: ""
+admin_api_token: ""
 
 # -- MQTT (optional) --
 mqtt:

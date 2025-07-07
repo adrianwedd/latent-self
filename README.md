@@ -58,6 +58,7 @@ python scripts/generate_password_hash.py mysecret
 
 Copy the printed hash into your `config.yaml` under the
 `admin_password_hash` field.
+You can also set an `admin_api_token` value for header-based access.
 
 ## Remote Admin API
 
@@ -75,7 +76,8 @@ The server listens on port **8001** by default and exposes three endpoints:
 * `POST /reload` – reload configuration from disk
 
 If `admin_password_hash` is set in `config.yaml`, Basic Auth credentials are
-required to access these routes.
+required to access these routes. You may also set `admin_api_token` and send it
+in the `X-Admin-Token` header with each request.
 
 ## OSC Control
 
