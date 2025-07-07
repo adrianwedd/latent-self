@@ -1,6 +1,17 @@
 from __future__ import annotations
 
-"""OSC server integration for live control of morphing parameters."""
+"""OSC server integration for live control of morphing parameters.
+
+The server listens for messages that mirror the application hotkeys:
+
+```
+/direction       "AGE"|"GENDER"|"SMILE"|...
+/blend/age       0.0 - 1.0
+/cycle_duration  seconds
+```
+
+These updates are applied immediately to the running :class:`VideoProcessor`.
+"""
 
 import logging
 from threading import Thread
@@ -21,6 +32,7 @@ class OSCServer:
         self.video = video
         self._dispatcher = Dispatcher()
         self._dispatcher.map("/direction", self._on_direction)
+        # Support dynamic blend weight paths like /blend/age 0.5
         self._dispatcher.map("/blend/*", self._on_blend)
         self._dispatcher.map("/cycle_duration", self._on_cycle)
         self._server = ThreadingOSCUDPServer((host, port), self._dispatcher)
