@@ -39,6 +39,18 @@ are present before running the suite. No manual
 environment variables are required; the test suite sets `PASS` internally when
 testing MQTT authentication.
 
+## Local Test Quickstart
+If you simply want to run the tests in a fresh checkout, install the
+requirements and invoke `pytest` directly:
+
+```bash
+pip install -r requirements.txt
+pytest
+```
+
+Optional extras such as **PyQt6** and **mediapipe** are mocked in the test
+suite, so they do not need to be installed.
+
 ## Code Style
 - Follow [PEP8](https://peps.python.org/pep-0008/) and type-hint all public APIs.
 - Use Google-style docstrings.
