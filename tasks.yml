@@ -612,3 +612,10 @@ PHASE_T_BACKLOG:
     tags: [core, gpu]
     priority: P3
     status: done
+
+  - id: 211
+    title: Frame metrics logging
+    desc: Log average FPS and processing latency every N seconds.
+    tags: [monitoring, performance]
+    priority: P3
+    status: done

@@ -19,7 +19,7 @@ if TYPE_CHECKING:  # pragma: no cover - type checking only
     from PyQt6.QtGui import QImage
 
 from directions import Direction
-from logging_setup import log_timing
+from logging_setup import FrameTimer, log_timing
 from time import time
 from typing import Any, Dict
 
@@ -483,6 +483,7 @@ class VideoProcessor:
         self.encode_fps = 0.0
         self._skip_next = False
         self.target_fps = self.config.data.get("fps", 15)
+        self.frame_timer = FrameTimer(self.config.data.get("metrics_interval", 10))
 
         self._apply_config()
 
@@ -850,13 +851,16 @@ class VideoProcessor:
                     self.camera_available = False
                     continue
 
-                (
-                    out_frame,
-                    baseline_latent,
-                    last_encode,
-                    idle_frames,
-                    current_magnitude,
-                ) = self._process_frame(frame, baseline_latent, last_encode, idle_frames)
+                with self.frame_timer.track():
+                    (
+                        out_frame,
+                        baseline_latent,
+                        last_encode,
+                        idle_frames,
+                        current_magnitude,
+                    ) = self._process_frame(
+                        frame, baseline_latent, last_encode, idle_frames
+                    )
                 
                 if not self._display_frame(
                     out_frame,
