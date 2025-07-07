@@ -49,13 +49,6 @@ def test_reload_applies_changes(tmp_path, monkeypatch):
     )
 
     monkeypatch.setattr('appdirs.user_config_dir', lambda *_: str(cfg_dir))
-    # Adapt DirectionsConfig constructor for Pydantic v2
-    orig_dc_init = services.DirectionsConfig.__init__
-    def patched(self, *args, **kwargs):
-        if '__root__' in kwargs:
-            kwargs['root'] = kwargs.pop('__root__')
-        orig_dc_init(self, **kwargs)
-    monkeypatch.setattr(services.DirectionsConfig, '__init__', patched)
     args = make_args(tmp_path)
 
     config = ConfigManager(args, app=None)
