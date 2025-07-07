@@ -44,5 +44,10 @@ mqtt:
   client_cert:
   client_key:
 
+# -- OSC (optional) --
+osc:
+  enabled: false
+  port: 9000
+
 # -- Scheduling --
 schedule: []
