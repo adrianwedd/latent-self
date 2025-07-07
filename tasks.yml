@@ -662,3 +662,30 @@ PHASE_T_BACKLOG:
     priority: P3
     status: done
 
+- id: 1001
+  title: Finalize Documentation and Readability
+  desc: Perform a final pass on all documentation to ensure it is clear, concise, and ready for a public audience. This includes adding comments to complex code sections and ensuring all READMEs are up-to-date.
+  tags: [docs]
+  priority: P1
+  status: pending
+
+- id: 1002
+  title: Code Cleanup and Final Refactoring
+  desc: Perform a deep-dive code review to identify and address any remaining code smells, inconsistencies, or areas for minor refactoring.
+  tags: [core]
+  priority: P2
+  status: pending
+
+- id: 1003
+  title: Placeholder and Unused File Removal
+  desc: Review the project for any placeholder images, unused scripts, or temporary files and remove them to clean up the repository.
+  tags: [general]
+  priority: P3
+  status: pending
+
+- id: 1004
+  title: Final Verification of Kiosk and Deployment Scripts
+  desc: Thoroughly test the kiosk installation and deployment scripts on a clean environment to ensure they are robust and user-friendly.
+  tags: [deployment]
+  priority: P2
+  status: pending
