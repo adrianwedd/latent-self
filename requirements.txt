@@ -12,3 +12,4 @@ pydantic-settings
 psutil
 Flask
 onnxruntime
+sounddevice
