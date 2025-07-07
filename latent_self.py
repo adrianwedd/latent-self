@@ -259,6 +259,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--kiosk", action="store_true", help="Hide cursor and launch fullscreen (Qt only)")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     parser.add_argument("--low-power", action="store_true", dest="low_power", help="Enable adaptive low power mode")
+    parser.add_argument("--gaze-mode", action="store_true", dest="gaze_mode", help="Switch directions based on gaze")
     parser.add_argument(
         "--demo",
         "--test",

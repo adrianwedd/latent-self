@@ -578,3 +578,10 @@ PHASE_T_BACKLOG:
     tags: [admin, ux]
     priority: P4
     status: pending
+
+  - id: 208
+    title: Gaze-Driven Direction Switching
+    desc: Select active latent direction based on where the user looks.
+    tags: [ui, feature, gaze]
+    priority: P3
+    status: done

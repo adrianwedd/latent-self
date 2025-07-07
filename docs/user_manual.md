@@ -34,6 +34,7 @@ Key options include:
 - `blend_weights` – relative strength of each latent direction including `beauty`.
 - `active_emotion` – starting emotion (happy, angry, sad, fear, disgust, surprise).
 - `fps` – target frames per second.
+- `gaze_mode` – switch directions based on where you look.
 - `admin_password_hash` – hashed password generated via `scripts/generate_password_hash.py`.
 - `mqtt` – optional heartbeat settings.
 
@@ -65,7 +66,8 @@ b - blended morph
 ### Qt Mirror
 
 When running with `--ui qt`, press **F12** to open the admin panel. Use **Q** or
-**Esc** to quit. The same direction keys as above apply.
+**Esc** to quit. The same direction keys as above apply. When *Gaze Mode* is enabled,
+looking at different screen quadrants automatically changes the morphing direction.
 
 ## Command-Line Options
 
@@ -81,6 +83,7 @@ Important flags (run `python latent_self.py -h` for the full list):
 | `--demo` | Use prerecorded media from `data/` |
 | `--ui {cv2,qt}` | UI backend |
 | `--kiosk` | Hide cursor and launch fullscreen (Qt only) |
+| `--gaze-mode` | Enable gaze-driven direction switching |
 | `--cycle-duration SECS` | Duration of a morph cycle |
 | `--blend-age WEIGHT` | Age blend weight |
 | `--blend-gender WEIGHT` | Gender blend weight |

@@ -118,6 +118,9 @@ class ConfigManager:
         if overrides.fps is not None:
             self.data["fps"] = overrides.fps
 
+        if overrides.gaze_mode is not None:
+            self.data["gaze_mode"] = overrides.gaze_mode
+
         if overrides.max_cpu_mem_mb is not None:
             self.data["max_cpu_mem_mb"] = overrides.max_cpu_mem_mb
         if overrides.max_gpu_mem_gb is not None:
@@ -296,6 +299,7 @@ class _EyeTracker:
         self.canonical = np.array(canonical or [[80.0, 100.0], [176.0, 100.0]], dtype=np.float32)
         self.left_eye: tuple[int, int] | None = None
         self.right_eye: tuple[int, int] | None = None
+        self.gaze_norm: tuple[float, float] | None = None
 
     def get_eyes(self, frame_bgr: np.ndarray) -> tuple[tuple[int, int], tuple[int, int]] | None:
         """Return smoothed eye coordinates from a BGR frame.
@@ -330,7 +334,15 @@ class _EyeTracker:
                 int(self.alpha * re[0] + (1 - self.alpha) * self.right_eye[0]),
                 int(self.alpha * re[1] + (1 - self.alpha) * self.right_eye[1]),
             )
+        self.gaze_norm = (
+            ((self.left_eye[0] + self.right_eye[0]) / 2) / w,
+            ((self.left_eye[1] + self.right_eye[1]) / 2) / h,
+        )
         return self.left_eye, self.right_eye
+
+    def get_gaze(self) -> tuple[float, float] | None:
+        """Return last normalized gaze coordinates if available."""
+        return self.gaze_norm
 
 
 def _to_tensor(img: np.ndarray) -> torch.Tensor:
@@ -428,6 +440,14 @@ class VideoProcessor:
         self._direction_lock = Lock()
         self.command_queue: SimpleQueue[Direction] = SimpleQueue()
         self.active_direction = Direction.BLEND
+        self.gaze_mode = self.config.data.get("gaze_mode", False)
+        self._gaze_last: Direction | None = None
+        self._gaze_map = {
+            (0, 0): Direction.AGE,
+            (1, 0): Direction.GENDER,
+            (0, 1): Direction.ETHNICITY,
+            (1, 1): Direction.SPECIES,
+        }
         self._last_affine: np.ndarray | None = None
         self._encode_durations: list[float] = []
         self.encode_fps = 0.0
@@ -452,6 +472,7 @@ class VideoProcessor:
                 eye_cfg.get("right_eye", [176.0, 100.0]),
             ]
             self.tracker.canonical = np.array(canonical, dtype=np.float32)
+        self.gaze_mode = self.config.data.get("gaze_mode", False)
         self.target_fps = self.config.data.get("fps", 15)
         emotion = self.config.data.get("active_emotion")
         if emotion:
@@ -464,12 +485,15 @@ class VideoProcessor:
     # ------------------------------------------------------------------
     # Core latent helpers
     # ------------------------------------------------------------------
-    def encode_face(self, frame: np.ndarray) -> torch.Tensor:
+    def encode_face(
+        self, frame: np.ndarray, eyes: tuple[tuple[int, int], tuple[int, int]] | None = None
+    ) -> torch.Tensor:
         """Encode the current frame into latent ``w+`` space."""
         start = time()
         with log_timing("encode_face"):
             with self.tracker_lock:
-                eyes = self.tracker.get_eyes(frame)
+                if eyes is None:
+                    eyes = self.tracker.get_eyes(frame)
             if eyes is None:
                 crop = cv2.resize(frame, (256, 256))
                 M = None
@@ -602,8 +626,15 @@ class VideoProcessor:
         """Process a single frame and return augmented output."""
 
         now = time()
+        with self.tracker_lock:
+            eyes = self.tracker.get_eyes(frame)
+            gaze = self.tracker.get_gaze()
+
+        if self.gaze_mode and gaze is not None:
+            self._update_direction_from_gaze(gaze)
+
         if baseline_latent is None or (now - last_encode) > self.REENCODE_INTERVAL_S:
-            baseline_latent = self.encode_face(frame)
+            baseline_latent = self.encode_face(frame, eyes)
             last_encode = now
             logging.info("Encoded new baseline latent.")
 
@@ -611,8 +642,7 @@ class VideoProcessor:
         latent_mod = baseline_latent + torch.from_numpy(offset).to(self.device)
         out_frame = self.decode_latent(latent_mod, (frame.shape[0], frame.shape[1]))
 
-        eyes = self.tracker.left_eye, self.tracker.right_eye
-        if eyes[0] is not None and eyes[1] is not None:
+        if eyes is not None:
             idle_frames = 0
             cv2.circle(out_frame, eyes[0], 3, (0, 255, 0), -1)
             cv2.circle(out_frame, eyes[1], 3, (0, 255, 0), -1)
@@ -846,6 +876,18 @@ class VideoProcessor:
             new_dir = self.command_queue.get_nowait()
             with self._direction_lock:
                 self.active_direction = new_dir
+
+    def _update_direction_from_gaze(self, gaze: tuple[float, float]) -> None:
+        """Set direction based on normalized gaze coordinates."""
+        region = (
+            1 if gaze[0] >= 0.5 else 0,
+            1 if gaze[1] >= 0.5 else 0,
+        )
+        direction = self._gaze_map.get(region)
+        if direction and direction != self._gaze_last:
+            with self._direction_lock:
+                self.active_direction = direction
+            self._gaze_last = direction
 
     def get_active_direction(self) -> Direction:
         """Return the currently active morphing direction."""
