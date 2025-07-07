@@ -22,6 +22,17 @@ the optional development tools used in CI:
 pip install mypy ruff mkdocs mkdocs-material pyinstaller
 ```
 
+## Test Dependencies
+Install `pytest` alongside the main requirements:
+
+```bash
+pip install -r requirements.txt
+pip install pytest
+```
+
+The tools listed above (`mypy`, `ruff`, `mkdocs`, `mkdocs-material`,
+`pyinstaller`) are optional for running the tests but are installed in CI.
+
 ## Running Tests
 To execute the unit tests run from the repository root:
 
