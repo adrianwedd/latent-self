@@ -2,6 +2,7 @@
 
 import yaml
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QPixmap, QImage
 from PyQt6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
@@ -18,6 +19,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QComboBox,
     QPushButton,
+    QLabel,
 )
 from .xycontrol import XYControl
 from werkzeug.security import check_password_hash
@@ -43,6 +45,8 @@ class AdminDialog(QDialog):
             QMessageBox.critical(self, "Model Load Error", err)
         if getattr(self.app.memory, "memory_update", None):
             self.app.memory.memory_update.connect(self._update_memory_bars)
+        if getattr(self.app, "worker", None) and hasattr(self.app.worker, "preview_frame"):
+            self.app.worker.preview_frame.connect(self._update_preview)
 
     def _check_password(self) -> bool:
         """Prompt for password or set a new one if none is configured."""
@@ -94,6 +98,10 @@ class AdminDialog(QDialog):
     def _setup_ui(self) -> None:
         """Create the settings form."""
         layout = QVBoxLayout(self)
+        self.preview_label = QLabel()
+        self.preview_label.setFixedSize(160, 160)
+        layout.addWidget(self.preview_label)
+
         form_layout = QFormLayout()
 
         # -- Cycle Duration --
@@ -248,6 +256,10 @@ class AdminDialog(QDialog):
         """Update progress bars with current memory usage."""
         self.cpu_bar.setValue(int(cpu_mb))
         self.gpu_bar.setValue(int(gpu_gb * 1024))
+
+    def _update_preview(self, img: QImage) -> None:
+        """Display a downscaled video preview."""
+        self.preview_label.setPixmap(QPixmap.fromImage(img))
 
     # XY control helpers
     def _on_xy_move(self, x: float, y: float) -> None:

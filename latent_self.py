@@ -236,28 +236,29 @@ class LatentSelf:
         from PyQt6.QtWidgets import QApplication
         app = QApplication(sys.argv)
         self.window = MirrorWindow(self)
-        worker = VideoWorker(self.video)
-        worker.new_frame.connect(self.window.update_frame)
-        worker.start()
+        self.worker = VideoWorker(self.video)
+        self.worker.new_frame.connect(self.window.update_frame)
+        self.worker.start()
         if self.kiosk:
             self.window.show_fullscreen()
         else:
             self.window.show()
         app.exec()
         self.video.stop()
-        worker.wait()
+        self.worker.wait()
 
 if QT_AVAILABLE:
     class VideoWorker(QThread):
         """QThread worker for video processing."""
         new_frame = pyqtSignal(QImage)
+        preview_frame = pyqtSignal(QImage)
 
         def __init__(self, processor: VideoProcessor):
             super().__init__()
             self.processor = processor
 
         def run(self):
-            self.processor.start(self.new_frame)
+            self.processor.start(self.new_frame, self.preview_frame)
 
 
 # -------------------------------------------------------------------------------------------------
