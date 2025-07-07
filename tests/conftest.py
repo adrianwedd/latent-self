@@ -1,8 +1,12 @@
 import base64
 import io
+import os
+from pathlib import Path
+
 import numpy as np
 import pytest
-from pathlib import Path
+
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 @pytest.fixture(scope="session")
 def latent_directions():

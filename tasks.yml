@@ -535,7 +535,7 @@ PHASE_T_BACKLOG:
     desc: Write pytest-qt tests for admin panel and fullscreen window widgets.
     tags: [tests, ui]
     priority: P4
-    status: pending
+    status: done
 
   - id: 107
     title: Implement Audio-Reactive Morphing

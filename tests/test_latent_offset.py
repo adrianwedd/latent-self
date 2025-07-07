@@ -33,6 +33,7 @@ class DummyProcessor:
         })
         self._direction_lock = Lock()
         self.audio = types.SimpleNamespace(volume=0.0)
+        self.xy_offset = np.zeros(2)
 
 def test_magnitude_range():
     proc = DummyProcessor()
