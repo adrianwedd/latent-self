@@ -506,14 +506,15 @@ PHASE_T_BACKLOG:
     desc: Implement a simple web server to expose admin settings over the local network.
     tags: [admin, feature]
     priority: P4
-    status: done
+    status: pending
+
 
   - id: 103
     title: Add API Endpoint for Live Configuration Reload
     desc: Provide a mechanism to trigger ConfigManager reloads without using the admin panel.
     tags: [core, architecture]
     priority: P3
-    status: done
+    status: pending
 
   - id: 104
     title: Clarify or Remove comfyui-workflow.json
@@ -527,14 +528,14 @@ PHASE_T_BACKLOG:
     desc: Ensure install_kiosk.sh consistently uses a single kiosk user.
     tags: [deployment]
     priority: P4
-    status: done
+    status: pending
 
   - id: 106
     title: Add Unit Tests for UI Components
     desc: Write pytest-qt tests for admin panel and fullscreen window widgets.
     tags: [tests, ui]
     priority: P4
-    status: done
+    status: pending
 
   - id: 107
     title: Implement Audio-Reactive Morphing
@@ -576,7 +577,7 @@ PHASE_T_BACKLOG:
     desc: Receive Open Sound Control messages to adjust morphing parameters.
     tags: [integration, osc]
     priority: P3
-    status: done
+    status: pending
 
   - id: 206
     title: Develop a Graceful Model Loading Failure Mode
