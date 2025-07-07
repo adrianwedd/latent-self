@@ -14,3 +14,4 @@ Flask
 onnxruntime
 sounddevice
 APScheduler
+python-osc

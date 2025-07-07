@@ -33,6 +33,12 @@ class MQTTConfig(BaseModel):
     client_cert: str | None = None
     client_key: str | None = None
 
+class OSCConfig(BaseModel):
+    """Settings for optional OSC control."""
+
+    enabled: bool = False
+    port: int = 9000
+
 class EyeTrackerConfig(BaseModel):
     """Configuration for eye tracking alignment."""
 
@@ -60,6 +66,7 @@ class AppConfig(BaseModel):
     device: str = "auto"
     admin_password_hash: str = ""
     mqtt: MQTTConfig = Field(default_factory=MQTTConfig)
+    osc: OSCConfig = Field(default_factory=OSCConfig)
     idle_seconds: int = 3
     max_cpu_mem_mb: int | None = None
     max_gpu_mem_gb: float | None = None

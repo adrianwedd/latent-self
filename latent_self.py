@@ -161,6 +161,7 @@ class LatentSelf:
 
         self.memory = MemoryMonitor(config)
         self.scheduler = PresetScheduler(config, self)
+        self._osc_server = None
         self._start_web_admin = web_admin
         self._web_server = None
 
@@ -170,6 +171,15 @@ class LatentSelf:
         self.memory.start()
         self.audio.start()
         self.scheduler.start()
+        if self.config.data.get("osc", {}).get("enabled"):
+            try:
+                from osc_server import OSCServer
+                port = int(self.config.data["osc"].get("port", 9000))
+                self._osc_server = OSCServer(self.config, self.video, port=port)
+                self._osc_server.start()
+                logging.info("OSC server started")
+            except Exception as e:  # noqa: BLE001 - runtime
+                logging.warning("Failed to start OSC server: %s", e)
         if self._start_web_admin:
             try:
                 from web_admin import WebAdmin
@@ -193,6 +203,8 @@ class LatentSelf:
                 QMessageBox.critical(None, "Latent Self Error", "An unexpected error occurred. Check logs.")
         finally:
             self.video.stop()
+            if self._osc_server:
+                self._osc_server.shutdown()
             if self._web_server:
                 self._web_server.shutdown()
             if self.telemetry:
