@@ -185,6 +185,13 @@ PHASE_H_CI_CD_AGENTS:
     priority: P1
     status: done
 
+  - id: CI-003
+    title: Cross-platform PyInstaller builds
+    desc: Build Windows and macOS bundles in CI using a helper script.
+    tags: [ci, packaging]
+    priority: P2
+    status: done
+
 PHASE_I_HOTFIXES:
   - id: HOTFIX-001
     title: Deduplicate/guard VideoWorker definitions

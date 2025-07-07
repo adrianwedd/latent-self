@@ -2,9 +2,10 @@
 
 This project can run as a kiosk service using **systemd**.
 
-1. Build the application with PyInstaller:
+1. Build the application with PyInstaller. A helper script installs any
+   OS-specific dependencies and runs the build:
    ```bash
-   pyinstaller latent_self.spec
+   python scripts/build_bundle.py
    ```
 2. Copy the service file and executable using the provided install script:
    ```bash
@@ -22,3 +23,7 @@ This project can run as a kiosk service using **systemd**.
 
 The service is configured with `Restart=on-failure` and `WatchdogSec=30s`
 to automatically restart the application if it crashes.
+
+PyInstaller bundles can be produced on Linux, Windows and macOS. The GitHub
+Actions workflow uploads the artifacts from all three platforms under the
+`dist/` directory.
