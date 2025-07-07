@@ -42,6 +42,12 @@ This project requires the following model weights:
 
 Place these files in a `models` directory in the project root.
 
+To speed up inference you can convert the generator and encoder to ONNX or TensorRT:
+```bash
+python scripts/convert_models.py --weights models --out models --tensorrt
+```
+ModelManager will automatically load `*.onnx` or `*.engine` files if present.
+
 ## Admin Password
 
 Generate a hashed password for the admin panel:
