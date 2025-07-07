@@ -191,6 +191,12 @@ PHASE_H_CI_CD_AGENTS:
     tags: [ci, packaging]
     priority: P2
     status: done
+  - id: CI-004
+    title: pre-commit hooks
+    desc: Add `.pre-commit-config.yaml`, document installation, and run hooks in CI.
+    tags: [ci, lint]
+    priority: P2
+    status: done
 
 PHASE_I_HOTFIXES:
   - id: HOTFIX-001
