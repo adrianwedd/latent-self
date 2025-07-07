@@ -409,9 +409,33 @@ class ModelManager:
         """
         self.weights_dir = weights_dir
         self.device = device
-        self.G = load_stylegan(weights_dir, device)
-        self.E = load_e4e(weights_dir, device)
-        self.latent_dirs = get_latent_directions(weights_dir)
+        self.model_load_failed = False
+        self.error_message = ""
+        try:
+            self.G = load_stylegan(weights_dir, device)
+        except Exception as e:  # noqa: BLE001 - runtime
+            logging.exception("Failed to load StyleGAN: %s", e)
+            self.G = None
+            self.model_load_failed = True
+            self.error_message += f"StyleGAN: {e}"
+        try:
+            self.E = load_e4e(weights_dir, device)
+        except Exception as e:  # noqa: BLE001 - runtime
+            logging.exception("Failed to load e4e encoder: %s", e)
+            self.E = None
+            self.model_load_failed = True
+            if self.error_message:
+                self.error_message += "; "
+            self.error_message += f"e4e: {e}"
+        try:
+            self.latent_dirs = get_latent_directions(weights_dir)
+        except Exception as e:  # noqa: BLE001 - runtime
+            logging.exception("Failed to load latent directions: %s", e)
+            self.latent_dirs = {}
+            self.model_load_failed = True
+            if self.error_message:
+                self.error_message += "; "
+            self.error_message += f"directions: {e}"
 
     def check_orthogonality(self) -> None:
         """Log dot products of key latent directions for debugging."""
@@ -794,17 +818,21 @@ class VideoProcessor:
             eyes = self.tracker.get_eyes(frame)
             gaze = self.tracker.get_gaze()
 
-        if self.gaze_mode and gaze is not None:
-            self._update_direction_from_gaze(gaze)
+        if self.model_manager.model_load_failed:
+            out_frame = frame.copy()
+            current_magnitude = 0.0
+        else:
+            if self.gaze_mode and gaze is not None:
+                self._update_direction_from_gaze(gaze)
 
-        if baseline_latent is None or (now - last_encode) > self.REENCODE_INTERVAL_S:
-            baseline_latent = self.encode_face(frame, eyes)
-            last_encode = now
-            logging.info("Encoded new baseline latent.")
+            if baseline_latent is None or (now - last_encode) > self.REENCODE_INTERVAL_S:
+                baseline_latent = self.encode_face(frame, eyes)
+                last_encode = now
+                logging.info("Encoded new baseline latent.")
 
-        offset, current_magnitude = self.latent_offset(now)
-        latent_mod = baseline_latent + torch.from_numpy(offset).to(self.device)
-        out_frame = self.decode_latent(latent_mod, (frame.shape[0], frame.shape[1]))
+            offset, current_magnitude = self.latent_offset(now)
+            latent_mod = baseline_latent + torch.from_numpy(offset).to(self.device)
+            out_frame = self.decode_latent(latent_mod, (frame.shape[0], frame.shape[1]))
 
         if eyes is not None:
             idle_frames = 0
@@ -827,6 +855,8 @@ class VideoProcessor:
         """Render the frame via Qt or OpenCV."""
 
         self._draw_hud(out_frame, current_magnitude)
+        if self.model_manager.model_load_failed:
+            self._draw_model_error(out_frame)
 
         self._apply_idle_overlay(out_frame, idle_frames, idle_threshold, fade_frames)
 
@@ -854,6 +884,24 @@ class VideoProcessor:
             cv2.FONT_HERSHEY_SIMPLEX,
             0.7,
             (255, 255, 255),
+            2,
+            cv2.LINE_AA,
+        )
+
+    def _draw_model_error(self, frame: np.ndarray) -> None:
+        """Display a warning when models failed to load."""
+
+        text = "Models failed to load"
+        (w, h), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 1.0, 2)
+        x = (frame.shape[1] - w) // 2
+        y = h + 10
+        cv2.putText(
+            frame,
+            text,
+            (x, y),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1.0,
+            (0, 0, 255),
             2,
             cv2.LINE_AA,
         )
