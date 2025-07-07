@@ -652,6 +652,10 @@ class VideoProcessor:
         self.target_fps = self.config.data.get("fps", 15)
         self.frame_timer = FrameTimer(self.config.data.get("metrics_interval", 10))
 
+        self.xy_offset = np.zeros(512)
+        self.xy_dir_x = Direction.AGE
+        self.xy_dir_y = Direction.GENDER
+
         self._apply_config()
 
     # Configuration from config manager
@@ -778,7 +782,8 @@ class VideoProcessor:
         current_magnitude = raw_amt * max_mag
         if getattr(self, "audio", None):
             current_magnitude *= 1.0 + float(getattr(self.audio, "volume", 0.0))
-        return current_magnitude * direction, current_magnitude
+        offset = current_magnitude * direction + self.xy_offset
+        return offset, current_magnitude
 
     def _send_mqtt_heartbeat(self) -> None:
         if self.telemetry:
@@ -1096,6 +1101,25 @@ class VideoProcessor:
         if isinstance(direction, str):
             direction = Direction.from_str(direction)
         self.command_queue.put(direction)
+
+    def update_xy_control(
+        self,
+        x: float,
+        y: float,
+        dir_x: Direction,
+        dir_y: Direction,
+    ) -> None:
+        """Set manual XY offset based on widget input."""
+        vec_x = self.model_manager.latent_dirs.get(dir_x.value)
+        vec_y = self.model_manager.latent_dirs.get(dir_y.value)
+        if vec_x is None or vec_y is None:
+            self.xy_offset = np.zeros(512)
+            return
+        mag_x = self.max_magnitudes.get(dir_x.value, 3.0)
+        mag_y = self.max_magnitudes.get(dir_y.value, 3.0)
+        self.xy_dir_x = dir_x
+        self.xy_dir_y = dir_y
+        self.xy_offset = x * mag_x * vec_x + y * mag_y * vec_y
 
     def _drain_direction_queue(self) -> None:
         """Apply any queued direction changes."""

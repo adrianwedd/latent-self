@@ -555,7 +555,7 @@ PHASE_T_BACKLOG:
     desc: Add a 2D control surface for exploring latent space with the mouse or other input.
     tags: [ui, feature]
     priority: P2
-    status: pending
+    status: done
 
   - id: 203
     title: Add a Configuration Preset System
