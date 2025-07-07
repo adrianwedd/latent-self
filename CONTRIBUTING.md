@@ -34,6 +34,11 @@ Install the testing requirements from `requirements-test.txt`:
 pip install -r requirements.txt -r requirements-test.txt
 ```
 
+The unit tests rely on packages that are not strictly required for running
+the application. In particular the suite imports **numpy** for array
+operations. Ensure these test-only dependencies are installed before invoking
+`pytest`. They are listed in `requirements-test.txt` for convenience.
+
 The tools listed above (`mypy`, `ruff`, `mkdocs`, `mkdocs-material`,
 `pyinstaller`) are optional for running the tests but are installed in CI.
 
@@ -69,6 +74,10 @@ requirements and invoke `pytest` directly:
 pip install -r requirements.txt -r requirements-test.txt
 pytest
 ```
+
+`numpy` is included in these requirements and is necessary for many of the
+tests. If you maintain a minimal environment, make sure it is installed
+before running `pytest`.
 
 Optional extras such as **PyQt6** and **mediapipe** are mocked in the test
 suite, so they do not need to be installed.
