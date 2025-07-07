@@ -471,3 +471,111 @@ PHASE_R_RELEASE:
     tags: [ci, release]
     priority: P2
     status: done
+
+PHASE_S_MAINTENANCE:
+  - id: DEPLOY-002
+    title: Unify kiosk user in deployment script
+    desc: Use a `KIOSK_USER` alias in install_kiosk.sh and ensure the systemd service uses the same user.
+    tags: [deployment, systemd]
+    priority: P3
+    status: done
+
+PHASE_T_BACKLOG:
+  - id: 101
+    title: Replace Placeholder Documentation Images
+    desc: Capture high-quality screenshots and GIFs of the application running and replace the placeholders in README.md and docs/user_manual.md.
+    tags: [docs, polish]
+    priority: P2
+    status: pending
+
+  - id: 102
+    title: Add a Lightweight Remote Admin Interface
+    desc: Implement a simple web server to expose admin settings over the local network.
+    tags: [admin, feature]
+    priority: P4
+    status: pending
+
+  - id: 103
+    title: Add API Endpoint for Live Configuration Reload
+    desc: Provide a mechanism to trigger ConfigManager reloads without using the admin panel.
+    tags: [core, architecture]
+    priority: P3
+    status: pending
+
+  - id: 104
+    title: Clarify or Remove comfyui-workflow.json
+    desc: Document the purpose of comfyui-workflow.json or delete it if unused.
+    tags: [docs, housekeeping]
+    priority: P5
+    status: pending
+
+  - id: 105
+    title: Unify Kiosk User in Deployment Script
+    desc: Ensure install_kiosk.sh consistently uses a single kiosk user.
+    tags: [deployment]
+    priority: P4
+    status: done
+
+  - id: 106
+    title: Add Unit Tests for UI Components
+    desc: Write pytest-qt tests for admin panel and fullscreen window widgets.
+    tags: [tests, ui]
+    priority: P4
+    status: pending
+
+  - id: 107
+    title: Implement Audio-Reactive Morphing
+    desc: Use microphone input to drive latent offset magnitude in real time.
+    tags: [core, feature]
+    priority: P3
+    status: pending
+
+  - id: 201
+    title: Optimize Models with ONNX or TensorRT
+    desc: Convert StyleGAN2 and e4e to ONNX/TensorRT to speed up inference.
+    tags: [performance, core]
+    priority: P1
+    status: pending
+
+  - id: 202
+    title: Implement Dynamic Latent Space Exploration
+    desc: Add a 2D control surface for exploring latent space with the mouse or other input.
+    tags: [ui, feature]
+    priority: P2
+    status: pending
+
+  - id: 203
+    title: Add a Configuration Preset System
+    desc: Allow saving and loading named presets of all configuration settings.
+    tags: [admin, ux]
+    priority: P3
+    status: pending
+
+  - id: 204
+    title: Implement a Daily Scheduler for Automated Changes
+    desc: Use APScheduler to swap models or presets at scheduled times.
+    tags: [core, scheduler]
+    priority: P4
+    status: pending
+
+  - id: 205
+    title: Add OSC Integration
+    desc: Receive Open Sound Control messages to adjust morphing parameters.
+    tags: [integration, osc]
+    priority: P3
+    status: pending
+
+  - id: 206
+    title: Develop a Graceful Model Loading Failure Mode
+    desc: Handle corrupt or missing model files without crashing the application.
+    tags: [robustness, core]
+    priority: P2
+    status: pending
+
+  - id: 207
+    title: Add Live Preview to Admin Panel
+    desc: Show a low-framerate video preview inside the admin UI.
+    tags: [admin, ux]
+    priority: P4
+    status: pending
+
