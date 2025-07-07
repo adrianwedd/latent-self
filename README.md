@@ -93,7 +93,7 @@ For additional options run:
 python latent_self.py -h
 ```
 
-See the [User Manual](docs/user_manual.md) for detailed setup and the
+See the [User Manual](USER_MANUAL.md) for detailed setup and the
 [Troubleshooting Guide](docs/troubleshooting.md) for common issues.
 
 ![Admin Controls](https://via.placeholder.com/800x400.png?text=Admin+Controls)
