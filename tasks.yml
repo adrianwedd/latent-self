@@ -639,7 +639,7 @@ PHASE_T_BACKLOG:
     desc: Formalize JSON schema, add preset system, secure admin API.
     tags: [config, enhancement]
     priority: P4
-    status: pending
+    status: done
 
   - id: 215
     title: Enhance Testing Framework and Coverage
