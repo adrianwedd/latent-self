@@ -13,3 +13,4 @@ psutil
 Flask
 onnxruntime
 sounddevice
+APScheduler

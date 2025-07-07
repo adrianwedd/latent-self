@@ -63,6 +63,7 @@ from services import (
     asset_path,
     MemoryMonitor,
     AudioProcessor,
+    PresetScheduler,
     select_torch_device,
 )
 
@@ -140,7 +141,8 @@ class LatentSelf:
         self.device = torch.device(device)
         self.ui = ui
         self.kiosk = kiosk
-        self.model_manager = model_manager or ModelManager(weights_dir, self.device)
+        self.weights_dir = Path(weights_dir)
+        self.model_manager = model_manager or ModelManager(self.weights_dir, self.device)
         self.telemetry = telemetry or TelemetryClient(config)
         self.low_power = low_power
         self.audio = AudioProcessor()
@@ -158,6 +160,7 @@ class LatentSelf:
         )
 
         self.memory = MemoryMonitor(config)
+        self.scheduler = PresetScheduler(config, self)
         self._start_web_admin = web_admin
         self._web_server = None
 
@@ -166,6 +169,7 @@ class LatentSelf:
         logging.info("Starting Latent Self…")
         self.memory.start()
         self.audio.start()
+        self.scheduler.start()
         if self._start_web_admin:
             try:
                 from web_admin import WebAdmin
@@ -196,7 +200,15 @@ class LatentSelf:
             self.model_manager.unload()
             self.audio.stop()
             self.memory.stop()
+            self.scheduler.shutdown()
             logging.info("Application shut down gracefully.")
+
+    def reload_models(self, weights_dir: Path) -> None:
+        """Reload GAN models from a new weights directory."""
+        self.model_manager.unload()
+        self.weights_dir = Path(weights_dir)
+        self.model_manager = ModelManager(self.weights_dir, self.device)
+        self.video.model_manager = self.model_manager
 
     def _run_cv2(self) -> None:
         """Display output using OpenCV windows."""

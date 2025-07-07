@@ -569,7 +569,7 @@ PHASE_T_BACKLOG:
     desc: Use APScheduler to swap models or presets at scheduled times.
     tags: [core, scheduler]
     priority: P4
-    status: pending
+    status: done
 
   - id: 205
     title: Add OSC Integration
