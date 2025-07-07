@@ -90,7 +90,8 @@ b - blended morph
 
 ## Demo
 
-![Demo GIF](https://via.placeholder.com/600x400.gif?text=Demo+GIF+Placeholder)
+![Demo GIF](docs/images/demo.gif)
+(If the image fails to load, run `python scripts/capture_screenshots.py` to generate it.)
 
 To try the application without a webcam, place a `demo.mp4` file or a folder of
 images inside the `data/` directory and run with `--demo`.
@@ -110,5 +111,6 @@ The application logs average FPS and frame latency every few seconds. Adjust
 `metrics_interval` in `config.yaml` to control how often these statistics are
 emitted.
 
-![Admin Controls](https://via.placeholder.com/800x400.png?text=Admin+Controls)
+![Admin Controls](docs/images/admin_controls.png)
+(Generate with `python scripts/capture_screenshots.py` if missing.)
 

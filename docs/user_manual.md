@@ -107,7 +107,8 @@ Important flags (run `python latent_self.py -h` for the full list):
 **Poor performance**
 : Running on CPU can be slow. Install CUDA drivers and run with `--device cuda` to enable GPU acceleration.
 
-![Admin Controls](https://via.placeholder.com/800x400.png?text=Admin+Controls)
+![Admin Controls](images/admin_controls.png)
+(Run `python ../../scripts/capture_screenshots.py` to regenerate.)
 
 ## Demo
 
@@ -117,6 +118,7 @@ You can preview the experience without a webcam by running in demo mode:
 python latent_self.py --demo
 ```
 
-![Demo GIF](https://via.placeholder.com/600x400.gif?text=Demo+GIF)
+![Demo GIF](images/demo.gif)
+(Run `python ../../scripts/capture_screenshots.py` to regenerate.)
 
 For additional help see the [project documentation](DOCS.md).

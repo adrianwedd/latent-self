@@ -499,7 +499,7 @@ PHASE_T_BACKLOG:
     desc: Capture high-quality screenshots and GIFs of the application running and replace the placeholders in README.md and docs/user_manual.md.
     tags: [docs, polish]
     priority: P2
-    status: pending
+    status: done
 
   - id: 102
     title: Add a Lightweight Remote Admin Interface
