@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 import getpass
-from werkzeug.security import generate_password_hash
+from password_utils import hash_password
 
 
 def main() -> None:
@@ -19,7 +19,7 @@ def main() -> None:
     args = parser.parse_args()
 
     password = args.password or getpass.getpass("Password: ")
-    print(generate_password_hash(password))
+    print(hash_password(password))
 
 
 if __name__ == "__main__":

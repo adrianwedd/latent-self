@@ -23,7 +23,8 @@ max_gpu_mem_gb:
 memory_check_interval: 10
 
 # -- Admin Panel --
-admin_password_hash: "pbkdf2:sha256:260000$cTqL9kE3jJtNlY8a$c5badd8a9b3a2b3a2b3a2b3a2b3a2b3a2b3a2b3a2b3a2b3a2b3a2b3a2b3a"  # Default: "admin"
+# Generate a hash using `python scripts/generate_password_hash.py`
+admin_password_hash: ""
 
 # -- MQTT (optional) --
 mqtt:

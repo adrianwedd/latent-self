@@ -450,3 +450,10 @@ PHASE_L_REVIEW:
     tags: [refactor, video]
     priority: P3
     status: done
+
+  - id: REVIEW-007
+    title: Secure admin password hashing
+    desc: Use werkzeug's generate_password_hash, provide helper script and first-run prompt to set the admin password.
+    tags: [security, admin]
+    priority: P3
+    status: done
