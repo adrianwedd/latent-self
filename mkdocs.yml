@@ -7,5 +7,6 @@ nav:
   - Deployment: deployment.md
   - User Manual: user_manual.md
   - Troubleshooting: troubleshooting.md
+  - Release Process: release.md
 
 docs_dir: docs
