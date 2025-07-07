@@ -4,10 +4,13 @@
 set -e
 
 APP_NAME="latent-self"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Paths are resolved relative to this script so it can be run from any directory.
 INSTALL_DIR="/opt/$APP_NAME"
-SERVICE_FILE="$APP_NAME.service"
-EXECUTABLE_FILE="../dist/$APP_NAME"
-SERVICE_PATH="/etc/systemd/system/$SERVICE_FILE"
+SERVICE_FILE="$SCRIPT_DIR/latent_self.service"
+# PyInstaller build output should live in ../dist/latent-self relative to the repo root
+EXECUTABLE_FILE="$SCRIPT_DIR/../dist/$APP_NAME"
+SERVICE_PATH="/etc/systemd/system/$(basename "$SERVICE_FILE")"
 KIOSK_USER="${KIOSK_USER:-kiosk}"
 KIOSK_GROUP="${KIOSK_GROUP:-$KIOSK_USER}"
 

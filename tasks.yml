@@ -688,4 +688,4 @@ PHASE_T_BACKLOG:
   desc: Thoroughly test the kiosk installation and deployment scripts on a clean environment to ensure they are robust and user-friendly.
   tags: [deployment]
   priority: P2
-  status: pending
+  status: done

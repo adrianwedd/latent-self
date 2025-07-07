@@ -9,15 +9,17 @@ This project can run as a kiosk service using **systemd**.
    ```
 2. Copy the service file and executable using the provided install script:
    ```bash
-   sudo deploy/install_kiosk.sh
+   sudo bash deploy/install_kiosk.sh
    ```
-   The script creates a dedicated `kiosk` user by default and places the
+   The script may need to be marked executable with `chmod +x deploy/install_kiosk.sh`.
+   It creates a dedicated `kiosk` user by default and places the
    executable in `/opt/latent-self/`. You can override the account by setting
    the `KIOSK_USER` environment variable:
    ```bash
-   sudo KIOSK_USER=myuser deploy/install_kiosk.sh
+   sudo KIOSK_USER=myuser bash deploy/install_kiosk.sh
    ```
    The service file is installed to `/etc/systemd/system/`.
+   This script requires a systemd-based system. It will exit if `systemctl` is not present.
 
 3. Enable and start the service:
    ```bash
