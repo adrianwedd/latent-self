@@ -4,7 +4,7 @@ Thank you for considering contributing! We welcome pull requests and issues.
 
 ## Development Setup
 1. Install Python 3.11 and create a virtual environment.
-2. Install the project dependencies and optional development tools.
+2. Install the project dependencies and optional development tools. If you plan to run tests, install `requirements-test.txt` as well.
 3. Run `python -m py_compile latent_self.py ui/*.py` before committing.
 4. Execute tests with `pytest`.
 
@@ -23,11 +23,10 @@ pip install mypy ruff mkdocs mkdocs-material pyinstaller
 ```
 
 ## Test Dependencies
-Install `pytest` alongside the main requirements:
+Install the testing requirements from `requirements-test.txt`:
 
 ```bash
-pip install -r requirements.txt
-pip install pytest
+pip install -r requirements.txt -r requirements-test.txt
 ```
 
 The tools listed above (`mypy`, `ruff`, `mkdocs`, `mkdocs-material`,
@@ -39,7 +38,7 @@ To execute the unit tests run from the repository root:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements.txt -r requirements-test.txt
 pip install mypy ruff mkdocs mkdocs-material pyinstaller  # optional
 pytest
 ```
@@ -55,7 +54,7 @@ If you simply want to run the tests in a fresh checkout, install the
 requirements and invoke `pytest` directly:
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements.txt -r requirements-test.txt
 pytest
 ```
 
