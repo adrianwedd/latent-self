@@ -10,3 +10,4 @@ Werkzeug
 pydantic
 pydantic-settings
 psutil
+Flask
