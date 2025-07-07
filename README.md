@@ -59,6 +59,23 @@ python scripts/generate_password_hash.py mysecret
 Copy the printed hash into your `config.yaml` under the
 `admin_password_hash` field.
 
+## Remote Admin API
+
+Start the lightweight HTTP server with `--web-admin` to manage
+configuration over the local network:
+
+```bash
+python latent_self.py --web-admin
+```
+
+The server listens on port **8001** by default and exposes two endpoints:
+
+* `GET /config` – return the current configuration as JSON
+* `POST /config` – update configuration fields (JSON body)
+
+If `admin_password_hash` is set in `config.yaml`, Basic Auth credentials are
+required to access these routes.
+
 ## Usage
 
 ```bash
