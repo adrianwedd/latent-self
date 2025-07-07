@@ -826,6 +826,7 @@ class VideoProcessor:
     def _handle_camera_error(
         self,
         frame_emitter: "pyqtSignal" | None,
+        preview_emitter: "pyqtSignal" | None,
         retry_delay: float,
         max_delay: float,
     ) -> float:
@@ -843,6 +844,9 @@ class VideoProcessor:
 
         if self.ui == "qt" and frame_emitter:
             frame_emitter.emit(_numpy_to_qimage(error_frame))
+            if preview_emitter:
+                thumb = cv2.resize(error_frame, (160, 160))
+                preview_emitter.emit(_numpy_to_qimage(thumb))
         else:
             cv2.imshow("Latent Self", error_frame)
             cv2.waitKey(1)
@@ -898,6 +902,7 @@ class VideoProcessor:
         self,
         out_frame: np.ndarray,
         frame_emitter: "pyqtSignal" | None,
+        preview_emitter: "pyqtSignal" | None,
         current_magnitude: float,
         idle_frames: int,
         idle_threshold: int,
@@ -915,6 +920,12 @@ class VideoProcessor:
             from PyQt6.QtCore import QThread
 
             frame_emitter.emit(_numpy_to_qimage(out_frame))
+            if preview_emitter:
+                now = time()
+                if not hasattr(self, "_last_preview") or (now - self._last_preview) > 0.5:
+                    thumb = cv2.resize(out_frame, (160, 160))
+                    preview_emitter.emit(_numpy_to_qimage(thumb))
+                    self._last_preview = now
             QThread.msleep(int(1000 / self.config.data["fps"]))
             return True
 
@@ -1032,7 +1043,11 @@ class VideoProcessor:
         else:
             logging.error("Failed to open camera at index %s", self.camera_index)
 
-    def _process_stream(self, frame_emitter: "pyqtSignal" | None = None) -> None:
+    def _process_stream(
+        self,
+        frame_emitter: "pyqtSignal" | None = None,
+        preview_emitter: "pyqtSignal" | None = None,
+    ) -> None:
         """Main loop orchestrating capture, processing and display.
 
         This loop delegates camera retries, frame processing and UI drawing to
@@ -1065,6 +1080,7 @@ class VideoProcessor:
                         if not self._display_frame(
                             last_out_frame,
                             frame_emitter,
+                            preview_emitter,
                             last_current_magnitude,
                             idle_frames,
                             idle_threshold,
@@ -1074,7 +1090,12 @@ class VideoProcessor:
                     continue
 
                 if not self.camera_available:
-                    retry_delay = self._handle_camera_error(frame_emitter, retry_delay, max_delay)
+                    retry_delay = self._handle_camera_error(
+                        frame_emitter,
+                        preview_emitter,
+                        retry_delay,
+                        max_delay,
+                    )
                     continue
 
                 ret, frame = self._get_frame()
@@ -1097,6 +1118,7 @@ class VideoProcessor:
                 if not self._display_frame(
                     out_frame,
                     frame_emitter,
+                    preview_emitter,
                     current_magnitude,
                     idle_frames,
                     idle_threshold,
@@ -1113,10 +1135,18 @@ class VideoProcessor:
                 cv2.destroyAllWindows()
 
     # Public control -----------------------------------------------------
-    def start(self, frame_emitter: "pyqtSignal" | None = None) -> None:
+    def start(
+        self,
+        frame_emitter: "pyqtSignal" | None = None,
+        preview_emitter: "pyqtSignal" | None = None,
+    ) -> None:
         """Begin processing the camera stream in a background thread."""
         self.stop_event.clear()
-        self._processing_thread = Thread(target=self._process_stream, args=(frame_emitter,), daemon=True)
+        self._processing_thread = Thread(
+            target=self._process_stream,
+            args=(frame_emitter, preview_emitter),
+            daemon=True,
+        )
         self._processing_thread.start()
 
     def join(self) -> None:

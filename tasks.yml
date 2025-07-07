@@ -590,7 +590,7 @@ PHASE_T_BACKLOG:
     desc: Show a low-framerate video preview inside the admin UI.
     tags: [admin, ux]
     priority: P4
-    status: pending
+    status: done
 
   - id: 208
     title: Gaze-Driven Direction Switching
