@@ -16,7 +16,9 @@ from PyQt6.QtWidgets import (
     QSpinBox,
     QProgressBar,
     QVBoxLayout,
+    QComboBox,
 )
+from .xycontrol import XYControl
 from werkzeug.security import check_password_hash
 from password_utils import hash_password
 
@@ -155,6 +157,28 @@ class AdminDialog(QDialog):
         self.memory_checkbox.setChecked(self.app.config.data.get('live_memory_stats', False))
         form_layout.addRow("Live Memory Stats:", self.memory_checkbox)
 
+        # -- XY Control --
+        self.xy_widget = XYControl()
+        self.x_combo = QComboBox()
+        self.y_combo = QComboBox()
+        for key, label in self.app.video.direction_labels.items():
+            self.x_combo.addItem(label, key)
+            self.y_combo.addItem(label, key)
+        xy_select = QHBoxLayout()
+        xy_select.addWidget(self.x_combo)
+        xy_select.addWidget(self.y_combo)
+        xy_box = QVBoxLayout()
+        xy_box.addLayout(xy_select)
+        xy_box.addWidget(self.xy_widget)
+        xy_group = QGroupBox()
+        xy_group.setLayout(xy_box)
+        form_layout.addRow("Latent XY:", xy_group)
+
+        self._xy = (0.0, 0.0)
+        self.xy_widget.moved.connect(self._on_xy_move)
+        self.x_combo.currentIndexChanged.connect(lambda _: self._apply_xy())
+        self.y_combo.currentIndexChanged.connect(lambda _: self._apply_xy())
+
         cpu_max = self.app.config.data.get('max_cpu_mem_mb') or 4096
         self.cpu_bar = QProgressBar()
         self.cpu_bar.setRange(0, cpu_max)
@@ -208,3 +232,19 @@ class AdminDialog(QDialog):
         """Update progress bars with current memory usage."""
         self.cpu_bar.setValue(int(cpu_mb))
         self.gpu_bar.setValue(int(gpu_gb * 1024))
+
+    # XY control helpers
+    def _on_xy_move(self, x: float, y: float) -> None:
+        self._xy = (x, y)
+        self._apply_xy()
+
+    def _apply_xy(self) -> None:
+        dir_x = self.x_combo.currentData()
+        dir_y = self.y_combo.currentData()
+        if dir_x and dir_y:
+            self.app.video.update_xy_control(
+                self._xy[0],
+                self._xy[1],
+                dir_x,
+                dir_y,
+            )
