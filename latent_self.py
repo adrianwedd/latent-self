@@ -45,16 +45,8 @@ from logging_setup import configure_logging
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from threading import Event, Thread
-from time import time
 from typing import Any, Dict
-import platform
-
-import appdirs
-import cv2
-import numpy as np
 import torch
-import yaml
 from services import (
     ConfigManager,
     ModelManager,
@@ -66,6 +58,7 @@ from services import (
     PresetScheduler,
     select_torch_device,
 )
+from engine import Engine
 
 try:
     import mediapipe as mp
@@ -84,10 +77,7 @@ class DirectionUI:
 
 
 try:
-    from PyQt6.QtCore import QThread, pyqtSignal
-    from PyQt6.QtGui import QImage
     from PyQt6.QtWidgets import QSlider, QLabel
-    from ui.fullscreen import MirrorWindow
     QT_AVAILABLE = True
 except ImportError:
     QT_AVAILABLE = False
@@ -164,56 +154,11 @@ class LatentSelf:
         self._osc_server = None
         self._start_web_admin = web_admin
         self._web_server = None
+        self.engine = Engine(self)
 
     def run(self) -> None:
-        """Start the application UI and processing loop."""
-        logging.info("Starting Latent Self…")
-        self.memory.start()
-        self.audio.start()
-        self.scheduler.start()
-        if self.config.data.get("osc", {}).get("enabled"):
-            try:
-                from osc_server import OSCServer
-                port = int(self.config.data["osc"].get("port", 9000))
-                self._osc_server = OSCServer(self.config, self.video, port=port)
-                self._osc_server.start()
-                logging.info("OSC server started")
-            except Exception as e:  # noqa: BLE001 - runtime
-                logging.warning("Failed to start OSC server: %s", e)
-        if self._start_web_admin:
-            try:
-                from web_admin import WebAdmin
-                self._web_server = WebAdmin(self.config)
-                self._web_server.start()
-                logging.info("Web admin started")
-            except Exception as e:  # noqa: BLE001 - runtime
-                logging.warning("Failed to start web admin: %s", e)
-        try:
-            if self.ui == "qt":
-                if not QT_AVAILABLE:
-                    logging.error("Qt UI requested, but PyQt6 is not installed. Please run: pip install PyQt6")
-                    sys.exit(1)
-                self._run_qt()
-            else:
-                self._run_cv2()
-        except Exception:
-            logging.exception("Unhandled exception")
-            if QT_AVAILABLE and self.ui == "qt":
-                from PyQt6.QtWidgets import QMessageBox
-                QMessageBox.critical(None, "Latent Self Error", "An unexpected error occurred. Check logs.")
-        finally:
-            self.video.stop()
-            if self._osc_server:
-                self._osc_server.shutdown()
-            if self._web_server:
-                self._web_server.shutdown()
-            if self.telemetry:
-                self.telemetry.shutdown()
-            self.model_manager.unload()
-            self.audio.stop()
-            self.memory.stop()
-            self.scheduler.shutdown()
-            logging.info("Application shut down gracefully.")
+        """Start the application via :class:`Engine`."""
+        self.engine.run()
 
     def reload_models(self, weights_dir: Path) -> None:
         """Reload GAN models from a new weights directory."""
@@ -222,43 +167,7 @@ class LatentSelf:
         self.model_manager = ModelManager(self.weights_dir, self.device)
         self.video.model_manager = self.model_manager
 
-    def _run_cv2(self) -> None:
-        """Display output using OpenCV windows."""
-        logging.info(
-            "Using cv2 UI. Controls: [q]uit | [y]age | [g]ender | [h]smile | "
-            "[s]pecies | [u]beauty | [1]happy | [2]angry | [3]sad | [4]fear | [5]disgust | [6]surprise | [b]blend"
-        )
-        self.video.start()
-        self.video.join()
 
-    def _run_qt(self) -> None:
-        """Launch the Qt based user interface."""
-        from PyQt6.QtWidgets import QApplication
-        app = QApplication(sys.argv)
-        self.window = MirrorWindow(self)
-        self.worker = VideoWorker(self.video)
-        self.worker.new_frame.connect(self.window.update_frame)
-        self.worker.start()
-        if self.kiosk:
-            self.window.show_fullscreen()
-        else:
-            self.window.show()
-        app.exec()
-        self.video.stop()
-        self.worker.wait()
-
-if QT_AVAILABLE:
-    class VideoWorker(QThread):
-        """QThread worker for video processing."""
-        new_frame = pyqtSignal(QImage)
-        preview_frame = pyqtSignal(QImage)
-
-        def __init__(self, processor: VideoProcessor):
-            super().__init__()
-            self.processor = processor
-
-        def run(self):
-            self.processor.start(self.new_frame, self.preview_frame)
 
 
 # -------------------------------------------------------------------------------------------------
