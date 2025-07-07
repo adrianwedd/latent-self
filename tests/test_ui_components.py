@@ -31,23 +31,37 @@ class DummyConfig:
         self.config_path = path / 'config.yaml'
         self.config_path.write_text(yaml.dump(self.data))
         self.reload_called = False
+        self.presets_dir = path / 'presets'
+        self.presets_dir.mkdir()
 
     def reload(self):
         self.reload_called = True
         self.data = yaml.safe_load(self.config_path.read_text())
 
+    def list_presets(self):
+        return []
+
 class DummyVideo:
     def __init__(self):
         self.enqueued = []
+        # simple mapping used by AdminDialog XY control
+        self.direction_labels = {d.value: d.value.title() for d in Direction}
+
     def enqueue_direction(self, d):
         self.enqueued.append(d)
+
+    def update_xy_control(self, x: float, y: float, dx: Direction, dy: Direction):
+        """Record XY control updates for assertions if needed."""
+        self.last_xy = (x, y, dx, dy)
 
 @pytest.fixture()
 def dummy_app(tmp_path):
     cfg = DummyConfig(tmp_path)
     mem = DummyMemory()
     video = DummyVideo()
-    return SimpleNamespace(config=cfg, memory=mem, video=video)
+    # minimal app namespace expected by AdminDialog
+    model_manager = SimpleNamespace(error_message="")
+    return SimpleNamespace(config=cfg, memory=mem, video=video, model_manager=model_manager)
 
 def test_admin_memory_signal_and_save(qtbot, dummy_app, monkeypatch):
     parent = MirrorWindow(dummy_app)
