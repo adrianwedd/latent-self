@@ -506,24 +506,28 @@ class VideoProcessor:
             return cv2.resize(out, target_shape[::-1])
 
     def latent_offset(self, t: float) -> tuple[np.ndarray, float]:
-        """Compute the current morphing direction and magnitude.
+        """Compute the current morph offset vector and its magnitude.
 
-        ``t`` is compared against :attr:`cycle_seconds`—the morph period loaded
-        from configuration—to obtain a normalised phase in ``[0, 1)``. The
-        expression ``1 - abs(phase * 2 - 1)`` then converts this phase into a
-        triangular waveform. ``raw_amt`` therefore rises from ``0`` to ``1``
-        midway through the cycle and falls back to ``0`` by the end.
+        The timestamp ``t`` is converted into a phase of the morph cycle by
+        taking ``t % cycle_seconds`` and normalising it to ``[0, 1)``. This phase
+        is then mapped to a triangle wave using ``1 - abs(phase * 2 - 1)`` so the
+        value smoothly ramps from ``0`` to ``1`` and back within each cycle.
+        Multiplying this waveform by ``max_magnitudes`` yields the final
+        ``current_magnitude`` used for scaling.
 
-        When :attr:`active_direction` is :class:`~Direction.BLEND`, the method
-        normalises ``blend_weights`` and mixes all available latent directions in
-        ``model_manager.latent_dirs``. Otherwise the single active direction is
-        used. The resulting unit vector is scaled by ``max_magnitudes`` for that
-        direction.
+        If :attr:`active_direction` is :class:`~Direction.BLEND`, ``blend_weights``
+        are normalised and combined so that each latent direction contributes
+        proportionally. Otherwise, the single active direction is used. The
+        resulting unit vector is multiplied by ``current_magnitude`` to produce
+        the offset added to the baseline latent.
+
+        Args:
+            t: Absolute or relative timestamp, typically from :func:`time.time`.
 
         Returns:
-            Tuple ``(offset, magnitude)`` where ``offset`` is the scaled latent
-            direction vector to add to the baseline latent and ``magnitude`` is
-            the scalar strength used for the scaling.
+            Tuple[np.ndarray, float]: ``offset`` is the scaled latent direction
+            vector, and ``current_magnitude`` is the scalar amount used for the
+            scaling.
 
         Example:
             >>> vp = VideoProcessor(...)
