@@ -110,6 +110,7 @@ class ConfigManager:
         self.data: Dict[str, Any] = {}
         self.directions_data: Dict[str, Any] = {}
         self.app = app
+        self._lock = Lock()
         self.reload()
         self._override_with_cli(cli_args)
 
@@ -132,57 +133,58 @@ class ConfigManager:
     def _override_with_cli(self, args: argparse.Namespace) -> None:
         """Merge CLI overrides using the CLIOverrides model."""
         overrides = CLIOverrides(**vars(args))
+        with self._lock:
+            if overrides.cycle_duration is not None:
+                self.data["cycle_duration"] = overrides.cycle_duration
+            if overrides.blend_age is not None:
+                self.data.setdefault("blend_weights", {})["age"] = overrides.blend_age
+            if overrides.blend_gender is not None:
+                self.data.setdefault("blend_weights", {})["gender"] = overrides.blend_gender
+            if overrides.blend_smile is not None:
+                self.data.setdefault("blend_weights", {})["smile"] = overrides.blend_smile
+            if overrides.blend_species is not None:
+                self.data.setdefault("blend_weights", {})["species"] = overrides.blend_species
+            if overrides.fps is not None:
+                self.data["fps"] = overrides.fps
 
-        if overrides.cycle_duration is not None:
-            self.data["cycle_duration"] = overrides.cycle_duration
-        if overrides.blend_age is not None:
-            self.data.setdefault("blend_weights", {})["age"] = overrides.blend_age
-        if overrides.blend_gender is not None:
-            self.data.setdefault("blend_weights", {})["gender"] = overrides.blend_gender
-        if overrides.blend_smile is not None:
-            self.data.setdefault("blend_weights", {})["smile"] = overrides.blend_smile
-        if overrides.blend_species is not None:
-            self.data.setdefault("blend_weights", {})["species"] = overrides.blend_species
-        if overrides.fps is not None:
-            self.data["fps"] = overrides.fps
+            if overrides.gaze_mode is not None:
+                self.data["gaze_mode"] = overrides.gaze_mode
 
-        if overrides.gaze_mode is not None:
-            self.data["gaze_mode"] = overrides.gaze_mode
-
-        if overrides.max_cpu_mem_mb is not None:
-            self.data["max_cpu_mem_mb"] = overrides.max_cpu_mem_mb
-        if overrides.max_gpu_mem_gb is not None:
-            self.data["max_gpu_mem_gb"] = overrides.max_gpu_mem_gb
-        if overrides.emotion is not None:
-            self.data["active_emotion"] = overrides.emotion.value
-        if overrides.device is not None:
-            self.data["device"] = overrides.device
-        try:
-            self.data = AppConfig(**self.data).model_dump()
-        except ValidationError as e:
-            raise RuntimeError(f"Invalid configuration after CLI overrides: {e}")
+            if overrides.max_cpu_mem_mb is not None:
+                self.data["max_cpu_mem_mb"] = overrides.max_cpu_mem_mb
+            if overrides.max_gpu_mem_gb is not None:
+                self.data["max_gpu_mem_gb"] = overrides.max_gpu_mem_gb
+            if overrides.emotion is not None:
+                self.data["active_emotion"] = overrides.emotion.value
+            if overrides.device is not None:
+                self.data["device"] = overrides.device
+            try:
+                self.data = AppConfig(**self.data).model_dump()
+            except ValidationError as e:
+                raise RuntimeError(f"Invalid configuration after CLI overrides: {e}")
 
     def reload(self) -> None:
         """Reload configuration files with validation."""
-        try:
-            with self.config_path.open("r") as f:
-                raw_cfg = yaml.safe_load(f) or {}
-            cfg = AppConfig(**raw_cfg)
-            self.data = cfg.model_dump()
-        except (yaml.YAMLError, ValidationError) as e:
-            raise RuntimeError(f"Invalid config.yaml: {e}")
+        with self._lock:
+            try:
+                with self.config_path.open("r") as f:
+                    raw_cfg = yaml.safe_load(f) or {}
+                cfg = AppConfig(**raw_cfg)
+                self.data = cfg.model_dump()
+            except (yaml.YAMLError, ValidationError) as e:
+                raise RuntimeError(f"Invalid config.yaml: {e}")
 
-        try:
-            with self.directions_path.open("r") as f:
-                raw_dir = yaml.safe_load(f) or {}
-            dirs = DirectionsConfig(root=raw_dir)
-            self.directions_data = dirs.model_dump()
-        except (yaml.YAMLError, ValidationError) as e:
-            raise RuntimeError(f"Invalid directions.yaml: {e}")
+            try:
+                with self.directions_path.open("r") as f:
+                    raw_dir = yaml.safe_load(f) or {}
+                dirs = DirectionsConfig(root=raw_dir)
+                self.directions_data = dirs.model_dump()
+            except (yaml.YAMLError, ValidationError) as e:
+                raise RuntimeError(f"Invalid directions.yaml: {e}")
 
-        logging.info("Configuration reloaded.")
-        if self.app:
-            self.app._apply_config()
+            logging.info("Configuration reloaded.")
+            if self.app:
+                self.app._apply_config()
 
 
 # ---------------------------------------------------------------------------
