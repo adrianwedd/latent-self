@@ -36,6 +36,7 @@ Key options include:
 - `fps` – target frames per second.
 - `gaze_mode` – switch directions based on where you look.
 - `admin_password_hash` – hashed password generated via `scripts/generate_password_hash.py`.
+- `admin_api_token` – token that must match the `X-Admin-Token` header for remote API requests.
 - `mqtt` – optional heartbeat settings.
 - `live_memory_stats` – show real-time CPU/GPU usage in the admin panel.
 
