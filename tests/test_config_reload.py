@@ -1,6 +1,7 @@
 import sys, types, argparse, pathlib
 from pathlib import Path
 import yaml
+import pytest
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 
 sys.modules.setdefault('cv2', types.ModuleType('cv2'))
@@ -71,4 +72,15 @@ def test_reload_applies_changes(tmp_path, monkeypatch):
     assert app.cycle_seconds == 6.0
     assert app.blend_weights['age'] == 0.1
     assert app.tracker_alpha == 0.7
+
+
+def test_invalid_config_schema(tmp_path, monkeypatch):
+    cfg_dir = tmp_path / "cfg"
+    cfg_dir.mkdir()
+    (cfg_dir / "config.yaml").write_text(yaml.dump({"cycle_duration": "fast"}))
+    (cfg_dir / "directions.yaml").write_text(yaml.dump({}))
+    monkeypatch.setattr('appdirs.user_config_dir', lambda *_: str(cfg_dir))
+    args = make_args(tmp_path)
+    with pytest.raises(RuntimeError):
+        ConfigManager(args, app=None)
 

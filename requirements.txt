@@ -9,6 +9,7 @@ paho-mqtt
 Werkzeug
 pydantic
 pydantic-settings
+jsonschema
 psutil
 Flask
 onnxruntime

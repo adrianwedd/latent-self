@@ -25,6 +25,8 @@ from time import time
 from typing import Any, Dict
 
 from pydantic import ValidationError
+import json
+import jsonschema
 from config_schema import AppConfig, CLIOverrides, DirectionsConfig
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -131,6 +133,16 @@ class ConfigManager:
         self.presets_dir = self.config_dir / "presets"
         self._ensure_config_exists()
         self._ensure_directions_exists()
+        # validate config.yaml against JSON schema on first load
+        schema_file = asset_path("data/config_schema.json")
+        with schema_file.open("r") as f:
+            schema = json.load(f)
+        with self.config_path.open("r") as f:
+            raw_cfg = yaml.safe_load(f) or {}
+        try:
+            jsonschema.validate(raw_cfg, schema)
+        except jsonschema.ValidationError as exc:
+            raise RuntimeError(f"config.yaml validation error: {exc.message}") from exc
         self.presets_dir.mkdir(parents=True, exist_ok=True)
         self.data: Dict[str, Any] = {}
         self.directions_data: Dict[str, Any] = {}
