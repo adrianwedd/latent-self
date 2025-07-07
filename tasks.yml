@@ -528,7 +528,7 @@ PHASE_T_BACKLOG:
     desc: Ensure install_kiosk.sh consistently uses a single kiosk user.
     tags: [deployment]
     priority: P4
-    status: pending
+    status: done
 
   - id: 106
     title: Add Unit Tests for UI Components

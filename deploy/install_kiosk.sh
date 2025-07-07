@@ -8,8 +8,8 @@ INSTALL_DIR="/opt/$APP_NAME"
 SERVICE_FILE="$APP_NAME.service"
 EXECUTABLE_FILE="../dist/$APP_NAME"
 SERVICE_PATH="/etc/systemd/system/$SERVICE_FILE"
-KIOSK_USER="kiosk"
-KIOSK_GROUP="$KIOSK_USER"
+KIOSK_USER="${KIOSK_USER:-kiosk}"
+KIOSK_GROUP="${KIOSK_GROUP:-$KIOSK_USER}"
 
 if [ "$(id -u)" -ne 0 ]; then
     echo "Error: This script must be run as root." >&2
@@ -29,16 +29,16 @@ fi
 echo "Installing Latent Self kiosk..."
 
 # 1. Create user and directories
-useradd -r -s /bin/false "$KIOSK_USER" || \
-    echo "User '$KIOSK_USER' already exists."
-mkdir -p "$INSTALL_DIR"
+if ! id "$KIOSK_USER" &>/dev/null; then
+    useradd -r -s /bin/false "$KIOSK_USER"
+fi
+install -d -o "$KIOSK_USER" -g "$KIOSK_GROUP" "$INSTALL_DIR"
 
 # 2. Copy application files
-cp "$EXECUTABLE_FILE" "$INSTALL_DIR/"
-cp "$SERVICE_FILE" "$SERVICE_PATH"
+install -o "$KIOSK_USER" -g "$KIOSK_GROUP" -m 755 "$EXECUTABLE_FILE" "$INSTALL_DIR/$APP_NAME"
+install -o root -g root -m 644 "$SERVICE_FILE" "$SERVICE_PATH"
 
-# 3. Set permissions
-chown -R "$KIOSK_USER":"$KIOSK_GROUP" "$INSTALL_DIR"
+# 3. Set permissions (redundant when using install but kept for clarity)
 chmod 755 "$INSTALL_DIR/$APP_NAME"
 
 # 4. Reload systemd and enable the service
