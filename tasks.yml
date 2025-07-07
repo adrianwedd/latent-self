@@ -562,7 +562,7 @@ PHASE_T_BACKLOG:
     desc: Allow saving and loading named presets of all configuration settings.
     tags: [admin, ux]
     priority: P3
-    status: pending
+    status: done
 
   - id: 204
     title: Implement a Daily Scheduler for Automated Changes

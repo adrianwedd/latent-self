@@ -17,6 +17,7 @@ from PyQt6.QtWidgets import (
     QProgressBar,
     QVBoxLayout,
     QComboBox,
+    QPushButton,
 )
 from .xycontrol import XYControl
 from werkzeug.security import check_password_hash
@@ -189,6 +190,18 @@ class AdminDialog(QDialog):
         self.gpu_bar.setRange(0, gpu_max)
         form_layout.addRow("GPU MB:", self.gpu_bar)
 
+        # -- Presets --
+        self.preset_combo = QComboBox()
+        for name in self.app.config.list_presets():
+            self.preset_combo.addItem(name)
+        self.load_preset_btn = QPushButton("Load")
+        self.save_preset_btn = QPushButton("Save Preset")
+        preset_row = QHBoxLayout()
+        preset_row.addWidget(self.preset_combo)
+        preset_row.addWidget(self.load_preset_btn)
+        preset_row.addWidget(self.save_preset_btn)
+        form_layout.addRow("Presets:", preset_row)
+
         layout.addLayout(form_layout)
 
         # -- Buttons --
@@ -196,6 +209,9 @@ class AdminDialog(QDialog):
         self.button_box.accepted.connect(self.save_and_reload)
         self.button_box.rejected.connect(self.reject)
         layout.addWidget(self.button_box)
+
+        self.load_preset_btn.clicked.connect(self._load_selected_preset)
+        self.save_preset_btn.clicked.connect(self._save_preset)
 
     def save_and_reload(self) -> None:
         """Save the new settings and reload the application config."""
@@ -248,3 +264,21 @@ class AdminDialog(QDialog):
                 dir_x,
                 dir_y,
             )
+
+    # Preset helpers
+    def _load_selected_preset(self) -> None:
+        name = self.preset_combo.currentText()
+        if name:
+            self.app.config.load_preset(name)
+            self.app.memory.emit_signals = self.app.config.data.get("live_memory_stats", False)
+            self.accept()
+
+    def _save_preset(self) -> None:
+        name, ok = QInputDialog.getText(self, "Save Preset", "Preset name:")
+        if ok and name:
+            self.app.config.save_preset(name)
+            self.preset_combo.clear()
+            for p in self.app.config.list_presets():
+                self.preset_combo.addItem(p)
+
+

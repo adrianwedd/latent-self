@@ -125,14 +125,43 @@ class ConfigManager:
         self.config_dir = Path(appdirs.user_config_dir("LatentSelf"))
         self.config_path = self.config_dir / "config.yaml"
         self.directions_path = self.config_dir / "directions.yaml"
+        self.presets_dir = self.config_dir / "presets"
         self._ensure_config_exists()
         self._ensure_directions_exists()
+        self.presets_dir.mkdir(parents=True, exist_ok=True)
         self.data: Dict[str, Any] = {}
         self.directions_data: Dict[str, Any] = {}
         self.app = app
         self._lock = Lock()
         self.reload()
         self._override_with_cli(cli_args)
+
+    # ------------------------------------------------------------------
+    # Preset management
+    # ------------------------------------------------------------------
+
+    def list_presets(self) -> list[str]:
+        """Return available preset names without extension."""
+        return [p.stem for p in self.presets_dir.glob("*.yaml")]
+
+    def save_preset(self, name: str) -> None:
+        """Save current configuration under ``name``."""
+        path = self.presets_dir / f"{name}.yaml"
+        with path.open("w") as f:
+            yaml.dump(self.data, f, default_flow_style=False)
+
+    def load_preset(self, name: str) -> None:
+        """Load preset ``name`` and reload configuration."""
+        path = self.presets_dir / f"{name}.yaml"
+        if not path.exists():
+            raise FileNotFoundError(name)
+        with path.open("r") as f:
+            raw = yaml.safe_load(f) or {}
+        cfg = AppConfig(**raw)
+        self.data = cfg.model_dump()
+        with self.config_path.open("w") as out:
+            yaml.dump(self.data, out, default_flow_style=False)
+        self.reload()
 
     def _ensure_config_exists(self) -> None:
         """Create a default ``config.yaml`` if one is missing."""
