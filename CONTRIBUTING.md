@@ -73,6 +73,16 @@ pytest
 Optional extras such as **PyQt6** and **mediapipe** are mocked in the test
 suite, so they do not need to be installed.
 
+## Building Docs
+
+The documentation is generated with **MkDocs**. Restore the image assets and
+serve the site locally with:
+
+```bash
+python scripts/decode_images.py
+mkdocs serve
+```
+
 ## Code Style
 - Follow [PEP8](https://peps.python.org/pep-0008/) and type-hint all public APIs.
 - Use Google-style docstrings.
