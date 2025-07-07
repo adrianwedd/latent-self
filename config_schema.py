@@ -49,6 +49,7 @@ class AppConfig(BaseModel):
     tracker_alpha: float = 0.4
     eye_tracker: EyeTrackerConfig = Field(default_factory=EyeTrackerConfig)
     gaze_mode: bool = False
+    device: str = "auto"
     admin_password_hash: str = ""
     mqtt: MQTTConfig = Field(default_factory=MQTTConfig)
     idle_seconds: int = 3
@@ -89,3 +90,4 @@ class CLIOverrides(BaseSettings):
     max_gpu_mem_gb: float | None = None
     gaze_mode: bool | None = None
     emotion: Direction | None = None
+    device: str | None = None

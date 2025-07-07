@@ -605,3 +605,10 @@ PHASE_T_BACKLOG:
     tags: [ui, monitoring]
     priority: P3
     status: done
+
+  - id: 210
+    title: GPU availability helper and config flag
+    desc: Select torch device based on config and warn when CUDA unavailable.
+    tags: [core, gpu]
+    priority: P3
+    status: done

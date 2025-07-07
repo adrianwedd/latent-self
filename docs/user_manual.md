@@ -80,7 +80,7 @@ Important flags (run `python latent_self.py -h` for the full list):
 | `--camera N` | Select webcam index |
 | `--resolution PX` | Frame size (square pixels) |
 | `--fps N` | Target frames per second |
-| `--cuda` | Use CUDA if available |
+| `--device {auto,cpu,cuda}` | Select processing device |
 | `--low-power` | Adaptive frame dropping |
 | `--demo` | Use prerecorded media from `data/` |
 | `--ui {cv2,qt}` | UI backend |
@@ -105,7 +105,7 @@ Important flags (run `python latent_self.py -h` for the full list):
 : Confirm that PyQt6 is installed. Use `pip install PyQt6` if necessary.
 
 **Poor performance**
-: Running on CPU can be slow. Install CUDA drivers and use `--cuda` to enable GPU acceleration.
+: Running on CPU can be slow. Install CUDA drivers and run with `--device cuda` to enable GPU acceleration.
 
 ![Admin Controls](https://via.placeholder.com/800x400.png?text=Admin+Controls)
 

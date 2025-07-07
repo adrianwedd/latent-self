@@ -15,6 +15,7 @@ active_emotion: HAPPY
 # -- Performance --
 fps: 15  # Target frames per second
 tracker_alpha: 0.4  # Smoothing factor for eye tracking (0.0 - 1.0)
+device: auto  # auto|cpu|cuda
 gaze_mode: false
 eye_tracker:
   left_eye: [80.0, 100.0]

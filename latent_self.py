@@ -21,7 +21,7 @@ Model weights required (download separately):
 Place them under a directory specified by --weights (default: ./models).
 
 Usage:
-    python latent_self.py --camera 0 --resolution 512 --cuda
+    python latent_self.py --camera 0 --resolution 512 --device cuda
     python latent_self.py --ui qt          # windowed
     python latent_self.py --ui qt --kiosk  # fullscreen kiosk
     
@@ -55,7 +55,15 @@ import cv2
 import numpy as np
 import torch
 import yaml
-from services import ConfigManager, ModelManager, VideoProcessor, TelemetryClient, asset_path, MemoryMonitor
+from services import (
+    ConfigManager,
+    ModelManager,
+    VideoProcessor,
+    TelemetryClient,
+    asset_path,
+    MemoryMonitor,
+    select_torch_device,
+)
 
 try:
     import mediapipe as mp
@@ -99,7 +107,7 @@ class LatentSelf:
         config: ConfigManager,
         camera_index: int,
         resolution: int,
-        device: str,
+        device: str | torch.device,
         weights_dir: Path,
         ui: str,
         kiosk: bool,
@@ -115,7 +123,7 @@ class LatentSelf:
             config: Loaded application configuration manager.
             camera_index: Index of the webcam to use.
             resolution: Square output resolution.
-            device: Torch device string (``"cpu"`` or ``"cuda"``).
+            device: Torch device or string (``"cpu"`` or ``"cuda"``).
             weights_dir: Directory containing model weights.
             ui: UI backend to use.
             kiosk: Whether to enable fullscreen kiosk mode.
@@ -238,6 +246,8 @@ def _validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) ->
         parser.error("--max-cpu-mem must be positive")
     if args.max_gpu_mem is not None and args.max_gpu_mem <= 0:
         parser.error("--max-gpu-mem must be positive")
+    if args.device and args.device not in {"auto", "cpu", "cuda"}:
+        parser.error("--device must be one of auto, cpu, cuda")
     args.weights = Path(args.weights).expanduser().resolve()
     if not args.weights.exists():
         parser.error(f"Weights directory does not exist: {args.weights}")
@@ -251,7 +261,17 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--camera", type=int, default=0, help="Webcam index")
     parser.add_argument("--resolution", type=int, default=512, help="Square frame size (px)")
     parser.add_argument("--fps", type=int, default=None, help="Target frames per second (overrides config)")
-    parser.add_argument("--cuda", action="store_true", help="Use CUDA if available")
+    parser.add_argument(
+        "--cuda",
+        action="store_true",
+        help="Use CUDA if available (deprecated, use --device)",
+    )
+    parser.add_argument(
+        "--device",
+        choices=["auto", "cpu", "cuda"],
+        default=None,
+        help="Processing device to use",
+    )
     parser.add_argument("--max-cpu-mem", type=int, default=None, help="Max CPU memory MB before warning")
     parser.add_argument("--max-gpu-mem", type=float, default=None, help="Max GPU memory GB before warning")
     parser.add_argument("--weights", type=Path, default=asset_path("models"), help="Directory for model weights")
@@ -283,11 +303,12 @@ def main(argv: list[str] | None = None) -> None:
     log_level = logging.DEBUG if args.debug else logging.INFO
     configure_logging(args.kiosk, level=log_level)
 
+    if args.cuda and not args.device:
+        args.device = "cuda"
+
     config = ConfigManager(args)
 
-    device = "cuda" if args.cuda and torch.cuda.is_available() else "cpu"
-    if args.cuda and device == "cpu":
-        logging.warning("CUDA requested but not available – falling back to CPU")
+    device = select_torch_device(config.data.get("device", "auto"))
 
     app = LatentSelf(
         config=config,
