@@ -520,7 +520,7 @@ PHASE_T_BACKLOG:
     desc: Document the purpose of comfyui-workflow.json or delete it if unused.
     tags: [docs, housekeeping]
     priority: P5
-    status: pending
+    status: done
 
   - id: 105
     title: Unify Kiosk User in Deployment Script
