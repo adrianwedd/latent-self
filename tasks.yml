@@ -627,3 +627,30 @@ PHASE_T_BACKLOG:
     tags: [docs, tooling]
     priority: P5
     status: done
+  - id: 213
+    title: Architectural Refactoring
+    desc: Restructure the application to improve modularity and testability.
+    tags: [refactor, architecture, core]
+    priority: P5
+    status: pending
+
+  - id: 214
+    title: Configuration and Schema Enhancement
+    desc: Formalize JSON schema, add preset system, secure admin API.
+    tags: [config, enhancement]
+    priority: P4
+    status: pending
+
+  - id: 215
+    title: Enhance Testing Framework and Coverage
+    desc: Expand unit and integration tests; add UI tests with pytest-qt.
+    tags: [tests]
+    priority: P4
+    status: done
+
+  - id: 216
+    title: Documentation Overhaul
+    desc: Replace placeholder images, add architecture diagram, write user manual.
+    tags: [docs]
+    priority: P3
+    status: pending
