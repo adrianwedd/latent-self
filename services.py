@@ -628,19 +628,7 @@ class VideoProcessor:
     ) -> bool:
         """Render the frame via Qt or OpenCV."""
 
-        with self._direction_lock:
-            mode = self.active_direction
-        mode_label = self.direction_labels.get(mode.value, mode.value.capitalize())
-        cv2.putText(
-            out_frame,
-            f"Mode: {mode_label.capitalize()} ({current_magnitude:+.1f})",
-            (10, out_frame.shape[0] - 20),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.7,
-            (255, 255, 255),
-            2,
-            cv2.LINE_AA,
-        )
+        self._draw_hud(out_frame, current_magnitude)
 
         self._apply_idle_overlay(out_frame, idle_frames, idle_threshold, fade_frames)
 
@@ -654,6 +642,23 @@ class VideoProcessor:
         cv2.imshow("Latent Self", out_frame)
         key = cv2.waitKey(int(1000 / self.config.data["fps"])) & 0xFF
         return self._handle_frame_input(key)
+
+    def _draw_hud(self, frame: np.ndarray, magnitude: float) -> None:
+        """Overlay status text on the output frame."""
+
+        with self._direction_lock:
+            mode = self.active_direction
+        mode_label = self.direction_labels.get(mode.value, mode.value.capitalize())
+        cv2.putText(
+            frame,
+            f"Mode: {mode_label.capitalize()} ({magnitude:+.1f})",
+            (10, frame.shape[0] - 20),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.7,
+            (255, 255, 255),
+            2,
+            cv2.LINE_AA,
+        )
 
     def _apply_idle_overlay(
         self,
