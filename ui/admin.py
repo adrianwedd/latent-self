@@ -35,6 +35,9 @@ class AdminDialog(QDialog):
             return
 
         self._setup_ui()
+        err = getattr(self.app.model_manager, "error_message", "")
+        if err:
+            QMessageBox.critical(self, "Model Load Error", err)
         if getattr(self.app.memory, "memory_update", None):
             self.app.memory.memory_update.connect(self._update_memory_bars)
 

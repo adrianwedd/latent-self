@@ -583,7 +583,7 @@ PHASE_T_BACKLOG:
     desc: Handle corrupt or missing model files without crashing the application.
     tags: [robustness, core]
     priority: P2
-    status: pending
+    status: done
 
   - id: 207
     title: Add Live Preview to Admin Panel
