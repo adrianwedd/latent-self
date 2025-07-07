@@ -646,7 +646,7 @@ PHASE_T_BACKLOG:
     desc: Expand unit and integration tests; add UI tests with pytest-qt.
     tags: [tests]
     priority: P4
-    status: pending
+    status: done
 
   - id: 216
     title: Documentation Overhaul
