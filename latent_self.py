@@ -113,6 +113,7 @@ class LatentSelf:
         kiosk: bool,
         demo: bool = False,
         low_power: bool = False,
+        web_admin: bool = False,
         model_manager: ModelManager | None = None,
         video_processor: VideoProcessor | None = None,
         telemetry: TelemetryClient | None = None,
@@ -129,6 +130,7 @@ class LatentSelf:
             kiosk: Whether to enable fullscreen kiosk mode.
             demo: Use prerecorded media from ``data/`` instead of a webcam.
             low_power: Enable adaptive resolution and frame skipping.
+            web_admin: Start the remote admin web server.
             model_manager: Optional pre-created :class:`ModelManager`.
             video_processor: Optional pre-created :class:`VideoProcessor`.
             telemetry: Optional :class:`TelemetryClient` for metrics.
@@ -153,11 +155,21 @@ class LatentSelf:
         )
 
         self.memory = MemoryMonitor(config)
+        self._start_web_admin = web_admin
+        self._web_server = None
 
     def run(self) -> None:
         """Start the application UI and processing loop."""
         logging.info("Starting Latent Self…")
         self.memory.start()
+        if self._start_web_admin:
+            try:
+                from web_admin import WebAdmin
+                self._web_server = WebAdmin(self.config)
+                self._web_server.start()
+                logging.info("Web admin started")
+            except Exception as e:  # noqa: BLE001 - runtime
+                logging.warning("Failed to start web admin: %s", e)
         try:
             if self.ui == "qt":
                 if not QT_AVAILABLE:
@@ -173,6 +185,8 @@ class LatentSelf:
                 QMessageBox.critical(None, "Latent Self Error", "An unexpected error occurred. Check logs.")
         finally:
             self.video.stop()
+            if self._web_server:
+                self._web_server.shutdown()
             if self.telemetry:
                 self.telemetry.shutdown()
             self.model_manager.unload()
@@ -280,6 +294,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     parser.add_argument("--low-power", action="store_true", dest="low_power", help="Enable adaptive low power mode")
     parser.add_argument("--gaze-mode", action="store_true", dest="gaze_mode", help="Switch directions based on gaze")
+    parser.add_argument("--web-admin", action="store_true", dest="web_admin", help="Enable remote admin web server")
     parser.add_argument(
         "--demo",
         "--test",
@@ -320,6 +335,7 @@ def main(argv: list[str] | None = None) -> None:
         kiosk=args.kiosk,
         demo=args.demo,
         low_power=args.low_power,
+        web_admin=args.web_admin,
     )
     config.app = app
     app.run()
