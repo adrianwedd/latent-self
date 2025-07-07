@@ -463,3 +463,11 @@ PHASE_L_REVIEW:
     tags: [security, admin]
     priority: P3
     status: done
+
+PHASE_R_RELEASE:
+  - id: RELEASE-001
+    title: Automate GitHub release creation
+    desc: Provide a script using GitHub CLI to publish a tagged release and upload platform binaries.
+    tags: [ci, release]
+    priority: P2
+    status: done
