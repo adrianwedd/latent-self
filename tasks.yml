@@ -506,7 +506,7 @@ PHASE_T_BACKLOG:
     desc: Implement a simple web server to expose admin settings over the local network.
     tags: [admin, feature]
     priority: P4
-    status: pending
+    status: done
 
 
   - id: 103
