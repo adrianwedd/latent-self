@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
     QInputDialog,
+    QCheckBox,
     QMessageBox,
     QRadioButton,
     QSlider,
@@ -140,6 +141,10 @@ class AdminDialog(QDialog):
         self.tracker_alpha_slider.setValue(int(self.app.config.data['tracker_alpha'] * 100))
         form_layout.addRow("Tracker Alpha:", self.tracker_alpha_slider)
 
+        self.gaze_checkbox = QCheckBox()
+        self.gaze_checkbox.setChecked(self.app.config.data.get('gaze_mode', False))
+        form_layout.addRow("Gaze Mode:", self.gaze_checkbox)
+
         layout.addLayout(form_layout)
 
         # -- Buttons --
@@ -158,6 +163,7 @@ class AdminDialog(QDialog):
         self.app.config.data['blend_weights']['species'] = self.species_slider.value() / 100.0
         self.app.config.data['fps'] = self.fps_spinbox.value()
         self.app.config.data['tracker_alpha'] = self.tracker_alpha_slider.value() / 100.0
+        self.app.config.data['gaze_mode'] = self.gaze_checkbox.isChecked()
 
         # emotion selection
         for name, btn in self.emotion_buttons.items():
