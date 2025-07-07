@@ -471,3 +471,11 @@ PHASE_R_RELEASE:
     tags: [ci, release]
     priority: P2
     status: done
+
+PHASE_S_MAINTENANCE:
+  - id: DEPLOY-002
+    title: Unify kiosk user in deployment script
+    desc: Use a `KIOSK_USER` alias in install_kiosk.sh and ensure the systemd service uses the same user.
+    tags: [deployment, systemd]
+    priority: P3
+    status: done

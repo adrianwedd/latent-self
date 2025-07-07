@@ -7,6 +7,9 @@ APP_NAME="latent-self"
 INSTALL_DIR="/opt/$APP_NAME"
 SERVICE_FILE="$APP_NAME.service"
 EXECUTABLE_FILE="../dist/$APP_NAME"
+SERVICE_PATH="/etc/systemd/system/$SERVICE_FILE"
+KIOSK_USER="kiosk"
+KIOSK_GROUP="$KIOSK_USER"
 
 if [ "$(id -u)" -ne 0 ]; then
     echo "Error: This script must be run as root." >&2
@@ -26,15 +29,16 @@ fi
 echo "Installing Latent Self kiosk..."
 
 # 1. Create user and directories
-useradd -r -s /bin/false kiosk || echo "User 'kiosk' already exists."
+useradd -r -s /bin/false "$KIOSK_USER" || \
+    echo "User '$KIOSK_USER' already exists."
 mkdir -p "$INSTALL_DIR"
 
 # 2. Copy application files
 cp "$EXECUTABLE_FILE" "$INSTALL_DIR/"
-cp "$SERVICE_FILE" /etc/systemd/system/
+cp "$SERVICE_FILE" "$SERVICE_PATH"
 
 # 3. Set permissions
-chown -R kiosk:kiosk "$INSTALL_DIR"
+chown -R "$KIOSK_USER":"$KIOSK_GROUP" "$INSTALL_DIR"
 chmod 755 "$INSTALL_DIR/$APP_NAME"
 
 # 4. Reload systemd and enable the service
@@ -45,7 +49,7 @@ then
 fi
 
 systemctl daemon-reload
-systemctl enable "$SERVICE_FILE"
+systemctl enable "$(basename "$SERVICE_FILE")"
 
 # 5. (Optional) Hide TTY switching for a more secure kiosk
 # This prevents users from switching to a virtual console.
@@ -57,4 +61,4 @@ systemctl enable "$SERVICE_FILE"
 # EOF
 
 echo "Installation complete."
-echo "You can start the service with: systemctl start $SERVICE_FILE"
+echo "You can start the service with: systemctl start $(basename "$SERVICE_FILE")"
