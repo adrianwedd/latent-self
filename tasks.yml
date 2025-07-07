@@ -548,7 +548,7 @@ PHASE_T_BACKLOG:
     desc: Convert StyleGAN2 and e4e to ONNX/TensorRT to speed up inference.
     tags: [performance, core]
     priority: P1
-    status: pending
+    status: done
 
   - id: 202
     title: Implement Dynamic Latent Space Exploration

@@ -33,6 +33,19 @@ import torch
 import yaml
 
 try:
+    import onnxruntime as ort  # type: ignore
+except Exception:  # pragma: no cover - optional dependency
+    ort = None
+
+try:
+    import tensorrt as trt  # type: ignore
+    import pycuda.driver as cuda  # type: ignore
+    import pycuda.autoinit  # noqa: F401
+except Exception:  # pragma: no cover - optional dependency
+    trt = None
+    cuda = None
+
+try:
     import mediapipe as mp
 except ImportError as exc:  # pragma: no cover - runtime fail hard
     raise RuntimeError(
@@ -266,6 +279,124 @@ def get_latent_directions(weights_dir: Path) -> Dict[str, np.ndarray]:
     return dirs
 
 
+class OnnxGenerator:
+    """Wrapper for StyleGAN ONNX generator."""
+
+    def __init__(self, path: Path, device: torch.device) -> None:
+        if ort is None:
+            raise RuntimeError("onnxruntime not installed")
+        providers = ["CUDAExecutionProvider"] if device.type == "cuda" else ["CPUExecutionProvider"]
+        self.session = ort.InferenceSession(str(path), providers=providers)
+        self.input_name = self.session.get_inputs()[0].name
+
+    def synthesis(self, latent_w_plus: torch.Tensor, noise_mode: str = "const"):
+        w = latent_w_plus.detach().cpu().numpy()
+        out = self.session.run(None, {self.input_name: w})[0]
+        img = torch.from_numpy(out)
+        return img, None, None
+
+
+class OnnxEncoder:
+    """Wrapper for e4e ONNX encoder."""
+
+    def __init__(self, path: Path, device: torch.device) -> None:
+        if ort is None:
+            raise RuntimeError("onnxruntime not installed")
+        providers = ["CUDAExecutionProvider"] if device.type == "cuda" else ["CPUExecutionProvider"]
+        self.session = ort.InferenceSession(str(path), providers=providers)
+        self.input_name = self.session.get_inputs()[0].name
+
+    def __call__(self, image: torch.Tensor, return_latents: bool = False):
+        arr = image.detach().cpu().numpy()
+        out = self.session.run(None, {self.input_name: arr})[0]
+        tensor = torch.from_numpy(out)
+        if return_latents:
+            return tensor, None
+        return tensor
+
+
+class TRTModule:
+    """Minimal TensorRT engine wrapper."""
+
+    def __init__(self, path: Path) -> None:
+        if trt is None or cuda is None:
+            raise RuntimeError("tensorrt not installed")
+        logger = trt.Logger(trt.Logger.WARNING)
+        runtime = trt.Runtime(logger)
+        with path.open("rb") as f:
+            self.engine = runtime.deserialize_cuda_engine(f.read())
+        self.context = self.engine.create_execution_context()
+        self.inputs = []
+        self.outputs = []
+        self.bindings = []
+        self.stream = cuda.Stream()
+        for binding in self.engine:
+            size = trt.volume(self.engine.get_binding_shape(binding))
+            dtype = trt.nptype(self.engine.get_binding_dtype(binding))
+            host_mem = cuda.pagelocked_empty(size, dtype)
+            device_mem = cuda.mem_alloc(host_mem.nbytes)
+            self.bindings.append(int(device_mem))
+            if self.engine.binding_is_input(binding):
+                self.inputs.append((host_mem, device_mem))
+            else:
+                self.outputs.append((host_mem, device_mem))
+        self.output_shape = self.engine.get_binding_shape(self.engine.num_bindings - 1)
+
+    def run(self, array: np.ndarray) -> np.ndarray:
+        inp_host, inp_dev = self.inputs[0]
+        out_host, out_dev = self.outputs[0]
+        np.copyto(inp_host, array.ravel())
+        cuda.memcpy_htod_async(inp_dev, inp_host, self.stream)
+        self.context.execute_async_v2(self.bindings, self.stream.handle, None)
+        cuda.memcpy_dtoh_async(out_host, out_dev, self.stream)
+        self.stream.synchronize()
+        return out_host.reshape(self.output_shape)
+
+
+class TRTGenerator(TRTModule):
+    """TensorRT StyleGAN generator."""
+
+    def synthesis(self, latent_w_plus: torch.Tensor, noise_mode: str = "const"):
+        out = self.run(latent_w_plus.detach().cpu().numpy())
+        img = torch.from_numpy(out)
+        return img, None, None
+
+
+class TRTEncoder(TRTModule):
+    """TensorRT e4e encoder."""
+
+    def __call__(self, image: torch.Tensor, return_latents: bool = False):
+        out = self.run(image.detach().cpu().numpy())
+        tensor = torch.from_numpy(out)
+        if return_latents:
+            return tensor, None
+        return tensor
+
+
+def load_stylegan(weights_dir: Path, device: torch.device):
+    engine_path = weights_dir / "stylegan2.engine"
+    onnx_path = weights_dir / "stylegan2.onnx"
+    if engine_path.exists() and trt is not None:
+        logging.info("Loading TensorRT generator from %s", engine_path)
+        return TRTGenerator(engine_path)
+    if onnx_path.exists() and ort is not None:
+        logging.info("Loading ONNX generator from %s", onnx_path)
+        return OnnxGenerator(onnx_path, device)
+    return get_stylegan_generator(weights_dir).to(device)
+
+
+def load_e4e(weights_dir: Path, device: torch.device):
+    engine_path = weights_dir / "e4e.engine"
+    onnx_path = weights_dir / "e4e.onnx"
+    if engine_path.exists() and trt is not None:
+        logging.info("Loading TensorRT encoder from %s", engine_path)
+        return TRTEncoder(engine_path)
+    if onnx_path.exists() and ort is not None:
+        logging.info("Loading ONNX encoder from %s", onnx_path)
+        return OnnxEncoder(onnx_path, device)
+    return get_e4e_encoder(weights_dir).to(device)
+
+
 class ModelManager:
     """Manage ML models used by the application."""
 
@@ -278,8 +409,8 @@ class ModelManager:
         """
         self.weights_dir = weights_dir
         self.device = device
-        self.G = get_stylegan_generator(weights_dir).to(device)
-        self.E = get_e4e_encoder(weights_dir).to(device)
+        self.G = load_stylegan(weights_dir, device)
+        self.E = load_e4e(weights_dir, device)
         self.latent_dirs = get_latent_directions(weights_dir)
 
     def check_orthogonality(self) -> None:
