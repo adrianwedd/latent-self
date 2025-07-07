@@ -592,3 +592,10 @@ PHASE_T_BACKLOG:
     tags: [ui, feature, gaze]
     priority: P3
     status: done
+
+  - id: 209
+    title: Live memory stats in admin panel
+    desc: Show CPU and GPU usage via progress bars when enabled.
+    tags: [ui, monitoring]
+    priority: P3
+    status: done

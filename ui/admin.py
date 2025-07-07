@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
     QRadioButton,
     QSlider,
     QSpinBox,
+    QProgressBar,
     QVBoxLayout,
 )
 from werkzeug.security import check_password_hash
@@ -34,6 +35,8 @@ class AdminDialog(QDialog):
             return
 
         self._setup_ui()
+        if getattr(self.app.memory, "memory_update", None):
+            self.app.memory.memory_update.connect(self._update_memory_bars)
 
     def _check_password(self) -> bool:
         """Prompt for password or set a new one if none is configured."""
@@ -145,6 +148,20 @@ class AdminDialog(QDialog):
         self.gaze_checkbox.setChecked(self.app.config.data.get('gaze_mode', False))
         form_layout.addRow("Gaze Mode:", self.gaze_checkbox)
 
+        self.memory_checkbox = QCheckBox()
+        self.memory_checkbox.setChecked(self.app.config.data.get('live_memory_stats', False))
+        form_layout.addRow("Live Memory Stats:", self.memory_checkbox)
+
+        cpu_max = self.app.config.data.get('max_cpu_mem_mb') or 4096
+        self.cpu_bar = QProgressBar()
+        self.cpu_bar.setRange(0, cpu_max)
+        form_layout.addRow("CPU MB:", self.cpu_bar)
+
+        gpu_max = int((self.app.config.data.get('max_gpu_mem_gb') or 8) * 1024)
+        self.gpu_bar = QProgressBar()
+        self.gpu_bar.setRange(0, gpu_max)
+        form_layout.addRow("GPU MB:", self.gpu_bar)
+
         layout.addLayout(form_layout)
 
         # -- Buttons --
@@ -164,6 +181,7 @@ class AdminDialog(QDialog):
         self.app.config.data['fps'] = self.fps_spinbox.value()
         self.app.config.data['tracker_alpha'] = self.tracker_alpha_slider.value() / 100.0
         self.app.config.data['gaze_mode'] = self.gaze_checkbox.isChecked()
+        self.app.config.data['live_memory_stats'] = self.memory_checkbox.isChecked()
 
         # emotion selection
         for name, btn in self.emotion_buttons.items():
@@ -179,5 +197,11 @@ class AdminDialog(QDialog):
 
         # Reload config in the main app
         self.app.config.reload()
+        self.app.memory.emit_signals = self.app.config.data.get('live_memory_stats', False)
 
         self.accept()
+
+    def _update_memory_bars(self, cpu_mb: float, gpu_gb: float) -> None:
+        """Update progress bars with current memory usage."""
+        self.cpu_bar.setValue(int(cpu_mb))
+        self.gpu_bar.setValue(int(gpu_gb * 1024))

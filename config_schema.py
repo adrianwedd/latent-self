@@ -56,6 +56,7 @@ class AppConfig(BaseModel):
     max_gpu_mem_gb: float | None = None
     emotion: Direction | None = None
     memory_check_interval: int = 10
+    live_memory_stats: bool = False
     idle_fade_frames: int | None = None
     active_emotion: Direction = Direction.HAPPY
 

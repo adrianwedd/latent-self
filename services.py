@@ -978,13 +978,33 @@ class TelemetryClient:
                 logging.warning("MQTT cleanup failed: %s", e)
 
 class MemoryMonitor:
-    """Background memory usage monitor."""
+    """Background memory usage monitor.
+
+    When ``live_memory_stats`` is enabled and PyQt6 is available, the
+    :attr:`memory_update` signal periodically emits the current CPU and GPU
+    usage in megabytes and gigabytes respectively.
+    """
 
     def __init__(self, config: ConfigManager) -> None:
         """Create a memory monitor from configuration values."""
         self.interval = config.data.get("memory_check_interval", 10)
         self.max_cpu_mb = config.data.get("max_cpu_mem_mb")
         self.max_gpu_gb = config.data.get("max_gpu_mem_gb")
+        self.emit_signals = config.data.get("live_memory_stats", False)
+        self.emitter = None
+        self.memory_update = None
+        if self.emit_signals:
+            try:
+                from PyQt6.QtCore import QObject, pyqtSignal
+
+                class _Emitter(QObject):
+                    memory_update = pyqtSignal(float, float)
+
+                self.emitter = _Emitter()
+                self.memory_update = self.emitter.memory_update
+            except Exception as e:  # pragma: no cover - optional feature
+                logging.warning("Live memory stats disabled: %s", e)
+                self.emit_signals = False
         self._stop = Event()
         self._thread: Thread | None = None
 
@@ -1011,6 +1031,8 @@ class MemoryMonitor:
             if self.max_gpu_gb and gpu_gb > self.max_gpu_gb:
                 logging.warning("GPU memory usage %.2f GB exceeds limit %s", gpu_gb, self.max_gpu_gb)
             logging.debug("Memory usage: CPU %.1f MB | GPU %.2f GB", cpu_mb, gpu_gb)
+            if self.emit_signals and self.memory_update:
+                self.memory_update.emit(cpu_mb, gpu_gb)
             self._stop.wait(self.interval)
 
     def stop(self) -> None:
