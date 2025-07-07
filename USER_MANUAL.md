@@ -45,7 +45,7 @@ Common flags (see `-h` for the full list):
 | `--camera N` | Select webcam index |
 | `--resolution PX` | Frame size (square) |
 | `--fps N` | Target frames per second |
-| `--cuda` | Enable CUDA acceleration |
+| `--device {auto,cpu,cuda}` | Select processing device |
 | `--low-power` | Adaptive frame dropping |
 | `--demo` | Use prerecorded media |
 | `--ui {cv2,qt}` | UI backend |

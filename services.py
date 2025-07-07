@@ -60,6 +60,34 @@ def asset_path(relative_path: str) -> Path:
     return base_path / relative_path
 
 
+def select_torch_device(preference: str = "auto") -> torch.device:
+    """Return a torch.device respecting GPU availability.
+
+    Args:
+        preference: ``"auto"``, ``"cpu"`` or ``"cuda"``.
+
+    Returns:
+        Resolved :class:`torch.device` instance.
+    """
+
+    pref = preference.lower()
+
+    if pref == "cpu":
+        return torch.device("cpu")
+
+    if pref == "cuda":
+        if torch.cuda.is_available():
+            return torch.device("cuda")
+        logging.warning("CUDA requested but not available – falling back to CPU")
+        return torch.device("cpu")
+
+    # auto
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    logging.warning("CUDA not available – using CPU")
+    return torch.device("cpu")
+
+
 # ---------------------------------------------------------------------------
 # Configuration manager
 # ---------------------------------------------------------------------------
@@ -127,6 +155,8 @@ class ConfigManager:
             self.data["max_gpu_mem_gb"] = overrides.max_gpu_mem_gb
         if overrides.emotion is not None:
             self.data["active_emotion"] = overrides.emotion.value
+        if overrides.device is not None:
+            self.data["device"] = overrides.device
         try:
             self.data = AppConfig(**self.data).model_dump()
         except ValidationError as e:
