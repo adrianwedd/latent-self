@@ -94,3 +94,4 @@ To add a new morphing direction (e.g., "happiness"), follow these steps:
 - **Performance Issues**: Real-time performance is heavily dependent on GPU availability. Ensure CUDA is properly configured if you intend to use it (`--cuda` flag).
 
 For step-by-step setup see the [User Manual](docs/user_manual.md).
+See the [Troubleshooting Guide](docs/troubleshooting.md) for common issues.
