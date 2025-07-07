@@ -653,7 +653,7 @@ PHASE_T_BACKLOG:
     desc: Replace placeholder images, add architecture diagram, write user manual.
     tags: [docs]
     priority: P3
-    status: pending
+    status: done
 
   - id: 217
     title: Add API token authentication for WebAdmin
