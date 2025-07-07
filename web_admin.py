@@ -54,6 +54,16 @@ class WebAdmin:
             self.config.reload()
             return jsonify({"status": "ok"})
 
+        @self.app.post("/reload")
+        def reload_config() -> Any:
+            if not self._auth():
+                abort(401)
+            try:
+                self.config.reload()
+                return jsonify({"status": "ok"})
+            except Exception as exc:  # noqa: BLE001 - runtime
+                return jsonify({"status": "error", "error": str(exc)}), 500
+
     # ------------------------------------------------------------------
     # Control methods
     # ------------------------------------------------------------------

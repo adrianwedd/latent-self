@@ -68,10 +68,11 @@ configuration over the local network:
 python latent_self.py --web-admin
 ```
 
-The server listens on port **8001** by default and exposes two endpoints:
+The server listens on port **8001** by default and exposes three endpoints:
 
 * `GET /config` – return the current configuration as JSON
 * `POST /config` – update configuration fields (JSON body)
+* `POST /reload` – reload configuration from disk
 
 If `admin_password_hash` is set in `config.yaml`, Basic Auth credentials are
 required to access these routes.
