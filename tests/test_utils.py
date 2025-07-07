@@ -10,7 +10,7 @@ import logging
 import pytest
 
 from directions import Direction
-from logging_setup import JsonFormatter, log_timing
+from logging_setup import FrameTimer, JsonFormatter, log_timing
 from latent_self import _validate_args
 
 
@@ -34,6 +34,7 @@ def test_validate_args_valid(tmp_path):
         emotion=None,
         max_cpu_mem=None,
         max_gpu_mem=None,
+        device="auto",
         weights=tmp_path,
     )
     _validate_args(args, parser)
@@ -84,3 +85,11 @@ def test_json_formatter_and_timing():
     record = json.loads(out)
     assert record['message'] == 'hello'
     assert record['level'] == 'info'
+
+
+def test_frame_timer_logs(caplog):
+    timer = FrameTimer(interval=0)
+    caplog.set_level(logging.INFO)
+    with timer.track():
+        pass
+    assert any('metrics.fps' in r.getMessage() for r in caplog.records)

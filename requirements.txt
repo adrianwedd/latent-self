@@ -10,3 +10,8 @@ Werkzeug
 pydantic
 pydantic-settings
 psutil
+Flask
+onnxruntime
+sounddevice
+APScheduler
+python-osc

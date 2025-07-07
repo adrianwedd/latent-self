@@ -91,7 +91,7 @@ To add a new morphing direction (e.g., "happiness"), follow these steps:
 - **Camera Not Detected**: Ensure your webcam is properly connected and not in use by another application. Check the `camera_index` in `latent_self.py` or `config.yaml`.
 - **Model Loading Errors**: Verify that all required model weights (`.pkl`, `.pt`, `.npz`) are present in the `models/` directory and are not corrupted.
 - **PyQt6 Issues**: If the Qt UI fails to launch, ensure PyQt6 is correctly installed (`pip install PyQt6`).
-- **Performance Issues**: Real-time performance is heavily dependent on GPU availability. Ensure CUDA is properly configured if you intend to use it (`--cuda` flag).
+- **Performance Issues**: Real-time performance is heavily dependent on GPU availability. Ensure CUDA is configured and run with `--device cuda`.
 
 For step-by-step setup see the [User Manual](docs/user_manual.md).
 See the [Troubleshooting Guide](docs/troubleshooting.md) for common issues.

@@ -1,4 +1,6 @@
 [Unit]
+# Installed by deploy/install_kiosk.sh.
+# The User= value below must match the KIOSK_USER variable in that script.
 Description=Latent Self Kiosk
 After=network.target
 

@@ -34,8 +34,10 @@ Key options include:
 - `blend_weights` – relative strength of each latent direction including `beauty`.
 - `active_emotion` – starting emotion (happy, angry, sad, fear, disgust, surprise).
 - `fps` – target frames per second.
+- `gaze_mode` – switch directions based on where you look.
 - `admin_password_hash` – hashed password generated via `scripts/generate_password_hash.py`.
 - `mqtt` – optional heartbeat settings.
+- `live_memory_stats` – show real-time CPU/GPU usage in the admin panel.
 
 You can also edit the YAML file directly or override values via CLI arguments.
 
@@ -65,7 +67,9 @@ b - blended morph
 ### Qt Mirror
 
 When running with `--ui qt`, press **F12** to open the admin panel. Use **Q** or
-**Esc** to quit. The same direction keys as above apply.
+**Esc** to quit. The same direction keys as above apply. When *Gaze Mode* is enabled,
+looking at different screen quadrants automatically changes the morphing direction.
+Enable *Live Memory Stats* to show CPU and GPU usage bars inside the dialog.
 
 ## Command-Line Options
 
@@ -76,11 +80,12 @@ Important flags (run `python latent_self.py -h` for the full list):
 | `--camera N` | Select webcam index |
 | `--resolution PX` | Frame size (square pixels) |
 | `--fps N` | Target frames per second |
-| `--cuda` | Use CUDA if available |
+| `--device {auto,cpu,cuda}` | Select processing device |
 | `--low-power` | Adaptive frame dropping |
 | `--demo` | Use prerecorded media from `data/` |
 | `--ui {cv2,qt}` | UI backend |
 | `--kiosk` | Hide cursor and launch fullscreen (Qt only) |
+| `--gaze-mode` | Enable gaze-driven direction switching |
 | `--cycle-duration SECS` | Duration of a morph cycle |
 | `--blend-age WEIGHT` | Age blend weight |
 | `--blend-gender WEIGHT` | Gender blend weight |
@@ -100,7 +105,7 @@ Important flags (run `python latent_self.py -h` for the full list):
 : Confirm that PyQt6 is installed. Use `pip install PyQt6` if necessary.
 
 **Poor performance**
-: Running on CPU can be slow. Install CUDA drivers and use `--cuda` to enable GPU acceleration.
+: Running on CPU can be slow. Install CUDA drivers and run with `--device cuda` to enable GPU acceleration.
 
 ![Admin Controls](https://via.placeholder.com/800x400.png?text=Admin+Controls)
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field, RootModel
 from pydantic_settings import BaseSettings
-from typing import Dict
+from typing import Dict, List
 
 from directions import Direction
 
@@ -33,11 +33,25 @@ class MQTTConfig(BaseModel):
     client_cert: str | None = None
     client_key: str | None = None
 
+class OSCConfig(BaseModel):
+    """Settings for optional OSC control."""
+
+    enabled: bool = False
+    port: int = 9000
+
 class EyeTrackerConfig(BaseModel):
     """Configuration for eye tracking alignment."""
 
     left_eye: list[float] = Field(default_factory=lambda: [80.0, 100.0])
     right_eye: list[float] = Field(default_factory=lambda: [176.0, 100.0])
+
+
+class ScheduleEntry(BaseModel):
+    """Single scheduled action entry."""
+
+    time: str
+    preset: str | None = None
+    model: str | None = None
 
 
 class AppConfig(BaseModel):
@@ -48,15 +62,20 @@ class AppConfig(BaseModel):
     fps: int = 15
     tracker_alpha: float = 0.4
     eye_tracker: EyeTrackerConfig = Field(default_factory=EyeTrackerConfig)
+    gaze_mode: bool = False
+    device: str = "auto"
     admin_password_hash: str = ""
     mqtt: MQTTConfig = Field(default_factory=MQTTConfig)
+    osc: OSCConfig = Field(default_factory=OSCConfig)
     idle_seconds: int = 3
     max_cpu_mem_mb: int | None = None
     max_gpu_mem_gb: float | None = None
     emotion: Direction | None = None
     memory_check_interval: int = 10
+    live_memory_stats: bool = False
     idle_fade_frames: int | None = None
     active_emotion: Direction = Direction.HAPPY
+    schedule: List["ScheduleEntry"] = Field(default_factory=list)
 
 class DirectionEntry(BaseModel):
     """Metadata for a single latent direction."""
@@ -85,4 +104,6 @@ class CLIOverrides(BaseSettings):
     fps: int | None = None
     max_cpu_mem_mb: int | None = None
     max_gpu_mem_gb: float | None = None
+    gaze_mode: bool | None = None
     emotion: Direction | None = None
+    device: str | None = None

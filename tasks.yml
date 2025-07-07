@@ -185,6 +185,19 @@ PHASE_H_CI_CD_AGENTS:
     priority: P1
     status: done
 
+  - id: CI-003
+    title: Cross-platform PyInstaller builds
+    desc: Build Windows and macOS bundles in CI using a helper script.
+    tags: [ci, packaging]
+    priority: P2
+    status: done
+  - id: CI-004
+    title: pre-commit hooks
+    desc: Add `.pre-commit-config.yaml`, document installation, and run hooks in CI.
+    tags: [ci, lint]
+    priority: P2
+    status: done
+
 PHASE_I_HOTFIXES:
   - id: HOTFIX-001
     title: Deduplicate/guard VideoWorker definitions
@@ -486,7 +499,7 @@ PHASE_T_BACKLOG:
     desc: Capture high-quality screenshots and GIFs of the application running and replace the placeholders in README.md and docs/user_manual.md.
     tags: [docs, polish]
     priority: P2
-    status: done
+    status: pending
 
   - id: 102
     title: Add a Lightweight Remote Admin Interface
@@ -579,3 +592,30 @@ PHASE_T_BACKLOG:
     priority: P4
     status: done
 
+  - id: 208
+    title: Gaze-Driven Direction Switching
+    desc: Select active latent direction based on where the user looks.
+    tags: [ui, feature, gaze]
+    priority: P3
+    status: done
+
+  - id: 209
+    title: Live memory stats in admin panel
+    desc: Show CPU and GPU usage via progress bars when enabled.
+    tags: [ui, monitoring]
+    priority: P3
+    status: done
+
+  - id: 210
+    title: GPU availability helper and config flag
+    desc: Select torch device based on config and warn when CUDA unavailable.
+    tags: [core, gpu]
+    priority: P3
+    status: done
+
+  - id: 211
+    title: Frame metrics logging
+    desc: Log average FPS and processing latency every N seconds.
+    tags: [monitoring, performance]
+    priority: P3
+    status: done
