@@ -30,10 +30,22 @@ class WebAdmin:
     def _auth(self) -> bool:
         """Return True if request provides valid credentials."""
         password_hash = self.config.data.get("admin_password_hash", "")
-        if not password_hash:
+        token = self.config.data.get("admin_api_token", "")
+
+        if password_hash:
+            auth = request.authorization
+            if not (auth and check_password_hash(password_hash, auth.password or "")):
+                return False
+
+        if token:
+            provided = request.headers.get("X-Admin-Token") or request.args.get("token")
+            if provided != token:
+                return False
+
+        if not password_hash and not token:
             return True
-        auth = request.authorization
-        return bool(auth and check_password_hash(password_hash, auth.password or ""))
+
+        return True
 
     def _setup_routes(self) -> None:
         @self.app.get("/config")

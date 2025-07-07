@@ -65,6 +65,7 @@ class AppConfig(BaseModel):
     gaze_mode: bool = False
     device: str = "auto"
     admin_password_hash: str = ""
+    admin_api_token: str = ""
     mqtt: MQTTConfig = Field(default_factory=MQTTConfig)
     osc: OSCConfig = Field(default_factory=OSCConfig)
     idle_seconds: int = 3

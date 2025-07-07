@@ -1,0 +1,367 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$defs": {
+    "BlendWeights": {
+      "description": "Weights for each morphing direction used when blending.",
+      "properties": {
+        "age": {
+          "default": 0.4,
+          "title": "Age",
+          "type": "number"
+        },
+        "gender": {
+          "default": 0.3,
+          "title": "Gender",
+          "type": "number"
+        },
+        "ethnicity": {
+          "default": 0.5,
+          "title": "Ethnicity",
+          "type": "number"
+        },
+        "species": {
+          "default": 0.2,
+          "title": "Species",
+          "type": "number"
+        },
+        "smile": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Smile"
+        }
+      },
+      "title": "BlendWeights",
+      "type": "object"
+    },
+    "Direction": {
+      "description": "Known latent directions.",
+      "enum": [
+        "AGE",
+        "GENDER",
+        "SMILE",
+        "ETHNICITY",
+        "SPECIES",
+        "BEAUTY",
+        "HAPPY",
+        "ANGRY",
+        "SAD",
+        "FEAR",
+        "DISGUST",
+        "SURPRISE",
+        "BLEND"
+      ],
+      "title": "Direction",
+      "type": "string"
+    },
+    "EyeTrackerConfig": {
+      "description": "Configuration for eye tracking alignment.",
+      "properties": {
+        "left_eye": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Left Eye",
+          "type": "array"
+        },
+        "right_eye": {
+          "items": {
+            "type": "number"
+          },
+          "title": "Right Eye",
+          "type": "array"
+        }
+      },
+      "title": "EyeTrackerConfig",
+      "type": "object"
+    },
+    "MQTTConfig": {
+      "description": "Settings for optional MQTT heartbeat publishing.",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "broker": {
+          "default": "localhost",
+          "title": "Broker",
+          "type": "string"
+        },
+        "port": {
+          "default": 1883,
+          "title": "Port",
+          "type": "integer"
+        },
+        "topic_namespace": {
+          "default": "mirror",
+          "title": "Topic Namespace",
+          "type": "string"
+        },
+        "device_id": {
+          "default": "",
+          "title": "Device Id",
+          "type": "string"
+        },
+        "heartbeat_interval": {
+          "default": 5,
+          "title": "Heartbeat Interval",
+          "type": "integer"
+        },
+        "username": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Username"
+        },
+        "password": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Password"
+        },
+        "tls": {
+          "default": false,
+          "title": "Tls",
+          "type": "boolean"
+        },
+        "ca_cert": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ca Cert"
+        },
+        "client_cert": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Client Cert"
+        },
+        "client_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Client Key"
+        }
+      },
+      "title": "MQTTConfig",
+      "type": "object"
+    },
+    "OSCConfig": {
+      "description": "Settings for optional OSC control.",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "port": {
+          "default": 9000,
+          "title": "Port",
+          "type": "integer"
+        }
+      },
+      "title": "OSCConfig",
+      "type": "object"
+    },
+    "ScheduleEntry": {
+      "description": "Single scheduled action entry.",
+      "properties": {
+        "time": {
+          "title": "Time",
+          "type": "string"
+        },
+        "preset": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Preset"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model"
+        }
+      },
+      "required": [
+        "time"
+      ],
+      "title": "ScheduleEntry",
+      "type": "object"
+    }
+  },
+  "description": "Primary application configuration model.",
+  "properties": {
+    "cycle_duration": {
+      "default": 12.0,
+      "title": "Cycle Duration",
+      "type": "number"
+    },
+    "blend_weights": {
+      "$ref": "#/$defs/BlendWeights"
+    },
+    "fps": {
+      "default": 15,
+      "title": "Fps",
+      "type": "integer"
+    },
+    "tracker_alpha": {
+      "default": 0.4,
+      "title": "Tracker Alpha",
+      "type": "number"
+    },
+    "eye_tracker": {
+      "$ref": "#/$defs/EyeTrackerConfig"
+    },
+    "gaze_mode": {
+      "default": false,
+      "title": "Gaze Mode",
+      "type": "boolean"
+    },
+    "device": {
+      "default": "auto",
+      "title": "Device",
+      "type": "string"
+    },
+    "admin_password_hash": {
+      "default": "",
+      "title": "Admin Password Hash",
+      "type": "string"
+    },
+    "admin_api_token": {
+      "default": "",
+      "title": "Admin API Token",
+      "type": "string"
+    },
+    "mqtt": {
+      "$ref": "#/$defs/MQTTConfig"
+    },
+    "osc": {
+      "$ref": "#/$defs/OSCConfig"
+    },
+    "idle_seconds": {
+      "default": 3,
+      "title": "Idle Seconds",
+      "type": "integer"
+    },
+    "max_cpu_mem_mb": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Max Cpu Mem Mb"
+    },
+    "max_gpu_mem_gb": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Max Gpu Mem Gb"
+    },
+    "emotion": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Direction"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "memory_check_interval": {
+      "default": 10,
+      "title": "Memory Check Interval",
+      "type": "integer"
+    },
+    "live_memory_stats": {
+      "default": false,
+      "title": "Live Memory Stats",
+      "type": "boolean"
+    },
+    "idle_fade_frames": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Idle Fade Frames"
+    },
+    "active_emotion": {
+      "$ref": "#/$defs/Direction",
+      "default": "HAPPY"
+    },
+    "schedule": {
+      "items": {
+        "$ref": "#/$defs/ScheduleEntry"
+      },
+      "title": "Schedule",
+      "type": "array"
+    }
+  },
+  "title": "AppConfig",
+  "type": "object"
+}

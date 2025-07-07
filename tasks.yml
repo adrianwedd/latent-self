@@ -632,14 +632,14 @@ PHASE_T_BACKLOG:
     desc: Restructure the application to improve modularity and testability.
     tags: [refactor, architecture, core]
     priority: P5
-    status: pending
+    status: done
 
   - id: 214
     title: Configuration and Schema Enhancement
     desc: Formalize JSON schema, add preset system, secure admin API.
     tags: [config, enhancement]
     priority: P4
-    status: pending
+    status: done
 
   - id: 215
     title: Enhance Testing Framework and Coverage
@@ -654,3 +654,11 @@ PHASE_T_BACKLOG:
     tags: [docs]
     priority: P3
     status: pending
+
+  - id: 217
+    title: Add API token authentication for WebAdmin
+    desc: Require requests to include `X-Admin-Token` matching `admin_api_token` in config.
+    tags: [security, admin]
+    priority: P3
+    status: done
+
