@@ -270,6 +270,12 @@ PHASE_J_ENHANCEMENTS:
     tags: [docs]
     priority: P2
     status: done
+  - id: DOCS-009
+    title: Add troubleshooting guide
+    desc: Document fixes for camera detection, missing weights and Qt installation.
+    tags: [docs, troubleshooting]
+    priority: P2
+    status: done
 
   - id: TEST-005
     title: Unit tests for Beauty and Emotion vectors

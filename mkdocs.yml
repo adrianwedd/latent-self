@@ -6,5 +6,6 @@ nav:
   - Architecture: architecture.puml
   - Deployment: deployment.md
   - User Manual: user_manual.md
+  - Troubleshooting: troubleshooting.md
 
 docs_dir: docs
