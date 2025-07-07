@@ -14,6 +14,9 @@ This project can run as a kiosk service using **systemd**.
    This script creates a dedicated `kiosk` user and places the executable in
    `/opt/latent-self/`. It also installs `deploy/latent_self.service` into
    `/etc/systemd/system/`.
+   The script defines a `KIOSK_USER` variable which must match the
+   `User=` value in the service file. The installer automatically updates
+   the file so both remain in sync.
 3. Enable and start the service:
    ```bash
    sudo systemctl daemon-reload

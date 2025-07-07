@@ -36,6 +36,8 @@ mkdir -p "$INSTALL_DIR"
 # 2. Copy application files
 cp "$EXECUTABLE_FILE" "$INSTALL_DIR/"
 cp "$SERVICE_FILE" "$SERVICE_PATH"
+# Ensure the service runs as the same kiosk user
+sed -i "s/^User=.*/User=$KIOSK_USER/" "$SERVICE_PATH"
 
 # 3. Set permissions
 chown -R "$KIOSK_USER":"$KIOSK_GROUP" "$INSTALL_DIR"
