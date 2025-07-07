@@ -513,7 +513,7 @@ PHASE_T_BACKLOG:
     desc: Provide a mechanism to trigger ConfigManager reloads without using the admin panel.
     tags: [core, architecture]
     priority: P3
-    status: pending
+    status: done
 
   - id: 104
     title: Clarify or Remove comfyui-workflow.json
