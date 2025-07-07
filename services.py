@@ -9,6 +9,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 from threading import Event, Thread, Lock
+from datetime import datetime
 from queue import SimpleQueue
 from typing import Callable, TypeVar, TYPE_CHECKING, Sequence
 from urllib.parse import urlparse
@@ -25,6 +26,8 @@ from typing import Any, Dict
 
 from pydantic import ValidationError
 from config_schema import AppConfig, CLIOverrides, DirectionsConfig
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 import appdirs
 import cv2
@@ -233,6 +236,8 @@ class ConfigManager:
 
             logging.info("Configuration reloaded.")
             if self.app:
+                if hasattr(self.app, "scheduler"):
+                    self.app.scheduler.reload_jobs()
                 self.app._apply_config()
 
 
@@ -1372,4 +1377,54 @@ class AudioProcessor:
             self._stop.set()
             if self._thread:
                 self._thread.join()
+
+
+class PresetScheduler:
+    """Schedule preset or model changes using APScheduler."""
+
+    def __init__(self, config: "ConfigManager", app: "LatentSelf") -> None:
+        self.config = config
+        self.app = app
+        self.scheduler = BackgroundScheduler()
+
+    def start(self) -> None:
+        """Start the scheduler with current jobs."""
+        self.reload_jobs()
+        self.scheduler.start()
+
+    def shutdown(self) -> None:
+        """Stop the scheduler."""
+        self.scheduler.shutdown(wait=False)
+
+    def reload_jobs(self) -> None:
+        """Reload scheduled jobs from configuration."""
+        self.scheduler.remove_all_jobs()
+        for entry in self.config.data.get("schedule", []):
+            time_str = entry.get("time")
+            if not time_str:
+                continue
+            try:
+                t = datetime.strptime(time_str, "%H:%M")
+            except ValueError:
+                logging.warning("Invalid schedule time format: %s", time_str)
+                continue
+            self.scheduler.add_job(
+                self._apply_entry,
+                CronTrigger(hour=t.hour, minute=t.minute),
+                args=[entry],
+            )
+
+    def _apply_entry(self, entry: dict) -> None:
+        preset = entry.get("preset")
+        model = entry.get("model")
+        if preset:
+            try:
+                self.config.load_preset(preset)
+            except Exception as exc:  # noqa: BLE001 - runtime
+                logging.error("Failed to load preset %s: %s", preset, exc)
+        if model:
+            try:
+                self.app.reload_models(Path(model))
+            except Exception as exc:  # noqa: BLE001 - runtime
+                logging.error("Failed to load model from %s: %s", model, exc)
 

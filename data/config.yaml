@@ -43,3 +43,6 @@ mqtt:
   ca_cert:
   client_cert:
   client_key:
+
+# -- Scheduling --
+schedule: []
