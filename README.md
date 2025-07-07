@@ -17,6 +17,7 @@ Latent Self is an interactive art installation that uses a webcam to capture a u
 *   MQTT heartbeat for remote monitoring
 *   Typed configuration via **pydantic-settings**
 *   Demo mode with prerecorded media (`--demo`)
+*   Optional live memory usage readout in the admin panel
 
 ## Installation
 

@@ -22,6 +22,7 @@ eye_tracker:
 max_cpu_mem_mb:
 max_gpu_mem_gb:
 memory_check_interval: 10
+live_memory_stats: false
 
 # -- Admin Panel --
 # Generate a hash using `python scripts/generate_password_hash.py`

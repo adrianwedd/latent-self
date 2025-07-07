@@ -37,6 +37,7 @@ Key options include:
 - `gaze_mode` – switch directions based on where you look.
 - `admin_password_hash` – hashed password generated via `scripts/generate_password_hash.py`.
 - `mqtt` – optional heartbeat settings.
+- `live_memory_stats` – show real-time CPU/GPU usage in the admin panel.
 
 You can also edit the YAML file directly or override values via CLI arguments.
 
@@ -68,6 +69,7 @@ b - blended morph
 When running with `--ui qt`, press **F12** to open the admin panel. Use **Q** or
 **Esc** to quit. The same direction keys as above apply. When *Gaze Mode* is enabled,
 looking at different screen quadrants automatically changes the morphing direction.
+Enable *Live Memory Stats* to show CPU and GPU usage bars inside the dialog.
 
 ## Command-Line Options
 
