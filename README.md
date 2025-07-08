@@ -28,7 +28,7 @@ Latent Self is an interactive art installation that uses a webcam to capture a u
     ```
 2.  Install the dependencies:
     ```bash
-    pip install -r requirements.txt
+    pip install -r requirements.lock
     ```
 3.  Download the model weights (see below).
 
