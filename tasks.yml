@@ -689,3 +689,9 @@ PHASE_T_BACKLOG:
   tags: [deployment]
   priority: P2
   status: done
+- id: TBC
+  title: Finalize Dependencies and Stabilize CI Pipeline
+  desc: Lock dependencies with requirements.lock and ensure CI uses the lock file.
+  tags: [build, ci]
+  priority: P1
+  status: done

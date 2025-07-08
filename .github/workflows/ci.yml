@@ -16,7 +16,7 @@ jobs:
         with:
           python-version: '3.11'
       - run: python -m pip install --upgrade pip
-      - run: pip install -r requirements.txt -r requirements-test.txt mypy ruff black pre-commit mkdocs mkdocs-material pyinstaller
+      - run: pip install -r requirements.lock -r requirements-test.txt mypy ruff black pre-commit mkdocs mkdocs-material pyinstaller
       - run: pre-commit run --all-files --show-diff-on-failure
       - run: pytest -q
       - run: mkdocs build --strict
