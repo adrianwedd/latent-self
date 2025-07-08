@@ -1,5 +1,5 @@
-pytest
-pytest-qt
-python-osc
+pytest            # unit testing framework
+pytest-qt         # Qt widget testing helpers
+python-osc        # for mocking OSC messages
 jsonschema
 numpy
