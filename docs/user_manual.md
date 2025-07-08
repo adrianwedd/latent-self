@@ -16,7 +16,7 @@ This guide walks you through installing Latent Self, adjusting its configuration
    ```
 3. Install the Python dependencies:
    ```bash
-   pip install -r requirements.txt
+   pip install -r requirements.lock
    ```
 4. Download the required model weights (StyleGAN generator, e4e encoder and `latent_directions.npz`) and place them inside the `models/` directory.
 5. (Optional) Build a standalone executable with PyInstaller:

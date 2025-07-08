@@ -669,6 +669,13 @@ PHASE_T_BACKLOG:
   priority: P1
   status: done
 
+- id: DEPS-1
+  title: Modernize Dependencies and Verify Environment
+  desc: Update all project dependencies to the latest stable versions and regenerate the lock file.
+  tags: [build, deps]
+  priority: P2
+  status: done
+
 - id: 1002
   title: Code Cleanup and Final Refactoring
   desc: Perform a deep-dive code review to identify and address any remaining code smells, inconsistencies, or areas for minor refactoring.
