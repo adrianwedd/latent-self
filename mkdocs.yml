@@ -10,5 +10,7 @@ nav:
   - Release Process: release.md
   - Documentation Strategy: documentation_strategy.md
   - Docs as Code: docs_as_code.md
+  - Legacy Doc Inventory: legacy_doc_inventory.md
+  - Setup Guide: setup_guide.md
 
 docs_dir: docs
