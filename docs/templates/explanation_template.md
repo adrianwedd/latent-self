@@ -1,4 +1,4 @@
-# Tutorial Template
+# Explanation Template
 
 <!-- Target Personas:
 - [New Hire Developer](../personas/new_hire.md)
@@ -9,18 +9,13 @@
 -->
 
 ## Summary
-Briefly describe what the reader will accomplish.
+Introduce the concept or design being explained.
 
 ## Context/Why
-Explain the motivation or background for this tutorial.
+Describe the background and reasoning behind this topic.
 
-## Prerequisites
-List required tools, knowledge, or environment setup.
-
-## Steps
-1. First step explanation.
-2. Second step explanation.
-3. Continue as needed.
+## Details
+Provide in-depth explanation. Use subsections as needed.
 
 ## Additional Resources
 Link to related documentation or external references.

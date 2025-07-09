@@ -711,7 +711,7 @@ PHASE_U_DOC_NETFLIX:
     desc: Provide a style guide and templates emphasising the "why".
     tags: [content, docs]
     priority: P2
-    status: pending
+    status: done
   - id: DOC-007
     title: Audit and Migrate Existing Documentation
     desc: Migrate valuable legacy docs to the new portal.
