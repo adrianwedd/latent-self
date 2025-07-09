@@ -18,3 +18,4 @@ APScheduler==3.11.0
 python-osc==1.9.3
 mike==2.1.3
 Sphinx==8.2.3
+requests==2.31.0

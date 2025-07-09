@@ -21,3 +21,7 @@ all generated sites to GitHub Pages when the `main` branch is updated.
 Translation files live next to the English sources using the `.es.md` suffix.
 Run `mkdocs serve` to preview all languages. The CI workflow installs `mkdocs-static-i18n` and builds every configured locale automatically.
 
+## Feedback
+
+Each page now features an **Edit this page** link and a Giscus comment widget. New comments are forwarded to our Slack channel for triage.
+

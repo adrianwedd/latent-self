@@ -30,7 +30,7 @@ A small dashboard summarising these metrics is published in the portal.
    [documentation templates](templates/) for the latest structure. Each template
    includes a **Context/Why** section to clarify motivation.
 3. Automate API reference generation for services.
-4. Integrate feedback widgets and triage workflow.
+4. Feedback widgets (Giscus) post new comments to the `#docs` Slack channel and each page links directly to GitHub for edits.
 
 
 ## Audience Personas

@@ -18,3 +18,4 @@ APScheduler        # scheduled tasks
 python-osc         # Open Sound Control integration
 mike               # versioned documentation deployment
 Sphinx
+requests

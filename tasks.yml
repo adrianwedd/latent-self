@@ -723,7 +723,7 @@ PHASE_U_DOC_NETFLIX:
     desc: Add widgets for rating, editing and commenting on docs.
     tags: [platform, docs]
     priority: P3
-    status: pending
+    status: done
 
 - id: DEPS-1
   title: Modernize Dependencies and Verify Environment
