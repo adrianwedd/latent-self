@@ -705,7 +705,7 @@ PHASE_U_DOC_NETFLIX:
     desc: Auto-generate API references from code annotations.
     tags: [automation, docs]
     priority: P3
-    status: pending
+    status: done
   - id: DOC-006
     title: Create Content Style Guide and Templates
     desc: Provide a style guide and templates emphasising the "why".
