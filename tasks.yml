@@ -669,6 +669,56 @@ PHASE_T_BACKLOG:
   priority: P1
   status: done
 
+PHASE_U_DOC_NETFLIX:
+  - id: DOC-001
+    title: Establish Documentation-as-a-Product Framework
+    desc: Treat documentation as a product with clear ownership, roadmap and metrics.
+    tags: [strategy, docs]
+    priority: P1
+    status: done
+  - id: DOC-002
+    title: Define Documentation Audience Personas
+    desc: Identify developer personas to tailor content effectively.
+    tags: [content, docs]
+    priority: P2
+    status: pending
+  - id: DOC-003
+    title: Implement a Centralized Documentation Portal
+    desc: Deploy a single searchable portal as the source of truth.
+    tags: [platform, docs]
+    priority: P1
+    status: pending
+  - id: DOC-004
+    title: Implement Docs-as-Code Workflow
+    desc: Integrate docs into version control and CI/CD.
+    tags: [workflow, docs]
+    priority: P2
+    status: pending
+  - id: DOC-005
+    title: Automate API Documentation Generation
+    desc: Auto-generate API references from code annotations.
+    tags: [automation, docs]
+    priority: P3
+    status: pending
+  - id: DOC-006
+    title: Create Content Style Guide and Templates
+    desc: Provide a style guide and templates emphasising the "why".
+    tags: [content, docs]
+    priority: P2
+    status: pending
+  - id: DOC-007
+    title: Audit and Migrate Existing Documentation
+    desc: Migrate valuable legacy docs to the new portal.
+    tags: [migration, docs]
+    priority: P4
+    status: pending
+  - id: DOC-008
+    title: Integrate Feedback Mechanisms into Portal
+    desc: Add widgets for rating, editing and commenting on docs.
+    tags: [platform, docs]
+    priority: P3
+    status: pending
+
 - id: DEPS-1
   title: Modernize Dependencies and Verify Environment
   desc: Update all project dependencies to the latest stable versions and regenerate the lock file.
