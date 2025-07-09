@@ -3,6 +3,10 @@ theme:
   name: material
 plugins:
   - search
+  - monorepo:
+      docs_dirs:
+        - ../../docs
+        - ../../demo_portal/docs
 nav:
   - Home: index.md
   - Architecture: architecture.puml
@@ -12,5 +16,5 @@ nav:
   - Release Process: release.md
   - Documentation Strategy: documentation_strategy.md
 
-# Use project docs directory
+# Default docs directory (root repo)
 docs_dir: ../../docs
