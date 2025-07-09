@@ -777,3 +777,9 @@ PHASE_U_DOC_NETFLIX:
   tags: [docs, i18n]
   priority: P3
   status: done
+- id: DOCS-014
+  title: Deliver docs-as-code workshop
+  desc: Run a short workshop on using the style guide, templates and PR workflow. Record sessions for later viewing.
+  tags: [docs, training]
+  priority: P3
+  status: done
