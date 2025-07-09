@@ -1,0 +1,16 @@
+site_name: Latent Self Docs Portal
+theme:
+  name: material
+plugins:
+  - search
+nav:
+  - Home: index.md
+  - Architecture: architecture.puml
+  - Deployment: deployment.md
+  - User Manual: user_manual.md
+  - Troubleshooting: troubleshooting.md
+  - Release Process: release.md
+  - Documentation Strategy: documentation_strategy.md
+
+# Use project docs directory
+docs_dir: ../../docs
