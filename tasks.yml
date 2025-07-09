@@ -289,6 +289,12 @@ PHASE_J_ENHANCEMENTS:
     tags: [docs, troubleshooting]
     priority: P2
     status: done
+  - id: DOCS-010
+    title: Service docs directory
+    desc: Add a dedicated `docs/` folder to the demo_portal service and update CI to publish it.
+    tags: [docs, ci]
+    priority: P3
+    status: done
 
   - id: TEST-005
     title: Unit tests for Beauty and Emotion vectors
