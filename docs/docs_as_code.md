@@ -15,3 +15,9 @@ A GitHub Actions workflow builds and deploys the site whenever changes are merge
 The `.github/workflows/docs.yml` workflow installs MkDocs, builds the docs for the
 main application and the demo portal, checks links with `lychee`, and publishes
 all generated sites to GitHub Pages when the `main` branch is updated.
+
+## Localization
+
+Translation files live next to the English sources using the `.es.md` suffix.
+Run `mkdocs serve` to preview all languages. The CI workflow installs `mkdocs-static-i18n` and builds every configured locale automatically.
+

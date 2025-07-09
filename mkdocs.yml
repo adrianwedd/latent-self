@@ -4,6 +4,13 @@ theme:
 plugins:
   - search
   - mike
+  - i18n:
+      languages:
+        - locale: en
+          name: English
+          default: true
+        - locale: es
+          name: Español
 nav:
   - Home: index.md
   - Architecture: architecture.puml

@@ -771,3 +771,9 @@ PHASE_U_DOC_NETFLIX:
   tags: [docs, versioning]
   priority: P3
   status: done
+- id: DOCS-013
+  title: Add multi-language docs using mkdocs-static-i18n
+  desc: Configure i18n plugin, add Spanish translations and update CI to build locales.
+  tags: [docs, i18n]
+  priority: P3
+  status: done
