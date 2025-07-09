@@ -20,6 +20,8 @@
   assigned_to: null
   epic: "Implement Netflix-Inspired Documentation Strategy"
 
+
+
 - id: 2
   title: "Define Documentation Audience Personas"
   description: "Identify and define key developer personas (e.g., new hire, backend specialist, frontend developer, SRE) to tailor content, structure, and language effectively."
@@ -161,3 +163,39 @@
     - "Feedback is routed to a designated Slack channel or ticketing system."
   assigned_to: null
   epic: "Implement Netflix-Inspired Documentation Strategy"
+
+---
+# Legacy Documentation Inventory
+legacy_inventory:
+  - title: "Setup Guide"
+    source: "Confluence"
+    owner: "Alice"
+    last_updated: "2023-05-10"
+    decision: "migrate"
+    status: "migrated"
+    file: "setup_guide.md"
+  - title: "Troubleshooting FAQ"
+    source: "Google Docs"
+    owner: "Bob"
+    last_updated: "2022-11-04"
+    decision: "migrate"
+    status: "migrated"
+    file: "troubleshooting.md"
+  - title: "Release Notes 2019"
+    source: "Wiki"
+    owner: "Carol"
+    last_updated: "2019-12-30"
+    decision: "archive"
+    status: "archived"
+  - title: "Old Style Guide"
+    source: "Confluence"
+    owner: "Dave"
+    last_updated: "2018-07-15"
+    decision: "delete"
+    status: "removed"
+  - title: "Integration API Draft"
+    source: "Google Docs"
+    owner: "Eve"
+    last_updated: "2020-03-01"
+    decision: "archive"
+    status: "archived"

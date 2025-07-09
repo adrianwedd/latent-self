@@ -2,6 +2,9 @@
 
 This guide lists common problems when running Latent Self and how to resolve them.
 
+## Context/Why
+You want quick answers when something goes wrong so you can get back to creating art.
+
 ## Camera not detected
 - Ensure the webcam is properly connected and not in use by another application.
 - Specify the correct device index with `--camera N` if you have multiple cameras.
