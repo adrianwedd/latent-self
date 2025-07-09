@@ -26,6 +26,9 @@ A small dashboard summarising these metrics is published in the portal.
 
 1. Launch the central documentation portal and migrate existing content.
 2. Publish a style guide and templates for all document types.
+   See the [Style Guide](style_guide.md) and
+   [documentation templates](templates/) for the latest structure. Each template
+   includes a **Context/Why** section to clarify motivation.
 3. Automate API reference generation for services.
 4. Integrate feedback widgets and triage workflow.
 
