@@ -171,3 +171,8 @@ scripts/deploy_docs.sh
 This publishes the documentation for the tagged version and updates the
 `latest` and `stable` aliases using the `mike` plugin.
 
+### Continuous Deployment
+Documentation changes merged to `main` automatically trigger a GitHub
+Actions workflow that builds all docs sites and publishes them to
+GitHub Pages.
+
