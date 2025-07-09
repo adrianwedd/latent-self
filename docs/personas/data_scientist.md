@@ -12,3 +12,9 @@ A researcher exploring machine learning models integrated with the project.
 - Build environment differences cause reproducibility issues.
 - Sparse examples on customizing inference code.
 - Model versioning guidelines are unclear.
+
+## Primary Information Needs
+- Location of curated datasets and data dictionaries.
+- Steps for training and evaluating new models.
+- Examples for integrating models into the pipeline.
+- Reproducible environment setup and dependency management.

@@ -12,3 +12,8 @@ An experienced developer focused on server-side features and integrations.
 - Documentation sometimes assumes frontend knowledge.
 - Hard to trace configuration defaults across environments.
 - Limited examples of advanced backend workflows.
+
+## Primary Information Needs
+- Consolidated API reference with request/response examples.
+- Mapping of config files and environment variables.
+- Deployment and monitoring playbooks for backend services.
