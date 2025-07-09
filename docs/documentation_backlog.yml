@@ -26,7 +26,7 @@
   component: "Content Strategy"
   dependencies: [1]
   priority: 2
-  status: "pending"
+  status: "done"
   command: null
   task_id: "DOC-002"
   area: "Content"
