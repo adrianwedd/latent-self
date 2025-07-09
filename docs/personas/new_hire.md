@@ -12,3 +12,9 @@ A developer who recently joined the organization and is unfamiliar with the proj
 - Overwhelmed by existing codebase.
 - Difficulty locating authoritative documentation.
 - Unsure which tools and scripts are actively maintained.
+
+## Primary Information Needs
+- Step-by-step environment setup and onboarding guides.
+- Architectural overview diagrams that explain component roles.
+- Central index of recommended scripts and utilities.
+- Clear contacts or channels for getting help during ramp-up.
