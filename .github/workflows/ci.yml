@@ -19,6 +19,7 @@ jobs:
       - run: pip install -r requirements.lock -r requirements-test.txt mypy ruff black pre-commit mkdocs mkdocs-material mkdocs-static-i18n pyinstaller
       - run: pre-commit run --all-files --show-diff-on-failure
       - run: pytest -q
+      - run: sphinx-build -b html docs/api_reference docs/api_reference/_build
       - run: mkdocs build --strict
       - run: python scripts/build_bundle.py
       - uses: actions/upload-artifact@v4
