@@ -9,5 +9,6 @@ nav:
   - Troubleshooting: troubleshooting.md
   - Release Process: release.md
   - Documentation Strategy: documentation_strategy.md
+  - Docs as Code: docs_as_code.md
 
 docs_dir: docs

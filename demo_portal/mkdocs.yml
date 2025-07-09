@@ -7,5 +7,4 @@ nav:
   - Home: index.md
   - Evaluation: ../docs/portal_evaluation.md
 
-# Use the main docs directory for now
-docs_dir: ../docs
+docs_dir: docs
