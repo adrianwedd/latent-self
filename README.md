@@ -160,3 +160,12 @@ python scripts/decode_images.py  # restore PNG/GIF assets
 mkdocs serve
 ```
 
+### Deploying Versioned Docs
+Tag your release and run:
+
+```bash
+scripts/deploy_docs.sh
+```
+This publishes the documentation for the tagged version and updates the
+`latest` and `stable` aliases using the `mike` plugin.
+

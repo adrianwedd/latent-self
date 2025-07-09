@@ -16,3 +16,4 @@ onnxruntime==1.22.0
 sounddevice==0.5.2
 APScheduler==3.11.0
 python-osc==1.9.3
+mike==2.1.3
