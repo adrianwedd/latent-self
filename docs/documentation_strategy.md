@@ -18,6 +18,7 @@ feedback and improvement proposals are routed through this role.
 - Time to first successful installation
 - Search success rate in the portal
 - Percentage of pull requests with accompanying docs
+- Page views and search queries tracked via Plausible
 
 A small dashboard summarising these metrics is published in the portal.
 

@@ -14,3 +14,10 @@ nav:
   - Setup Guide: setup_guide.md
 
 docs_dir: docs
+extra:
+  analytics:
+    provider: plausible
+    domain: example.com
+extra_javascript:
+  - https://plausible.io/js/script.js
+  - js/plausible.js
