@@ -1,4 +1,4 @@
-# Tutorial Template
+# Reference Template
 
 <!-- Target Personas:
 - [New Hire Developer](../personas/new_hire.md)
@@ -9,18 +9,16 @@
 -->
 
 ## Summary
-Briefly describe what the reader will accomplish.
+Briefly describe what this reference covers.
 
 ## Context/Why
-Explain the motivation or background for this tutorial.
+Explain when someone would use this reference and why it matters.
 
-## Prerequisites
-List required tools, knowledge, or environment setup.
+## Parameters
+List key parameters, flags, or options.
 
-## Steps
-1. First step explanation.
-2. Second step explanation.
-3. Continue as needed.
+## Usage
+Provide example usage or code samples.
 
 ## Additional Resources
 Link to related documentation or external references.
