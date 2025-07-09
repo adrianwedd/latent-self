@@ -687,7 +687,7 @@ PHASE_U_DOC_NETFLIX:
     desc: Deploy a single searchable portal as the source of truth.
     tags: [platform, docs]
     priority: P1
-    status: pending
+    status: done
   - id: DOC-004
     title: Implement Docs-as-Code Workflow
     desc: Integrate docs into version control and CI/CD.
