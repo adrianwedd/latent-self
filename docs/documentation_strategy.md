@@ -29,3 +29,7 @@ A small dashboard summarising these metrics is published in the portal.
 3. Automate API reference generation for services.
 4. Integrate feedback widgets and triage workflow.
 
+
+## Audience Personas
+
+The docs target several developer personas. Refer to [Developer Personas](personas/index.md) for detailed profiles outlining goals and pain points for each group.
