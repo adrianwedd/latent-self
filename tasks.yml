@@ -764,3 +764,10 @@ PHASE_U_DOC_NETFLIX:
   tags: [docs, analytics]
   priority: P2
   status: done
+
+- id: DOCS-012
+  title: Enable versioned documentation
+  desc: Add mike plugin to build and publish docs per tag with a version selector
+  tags: [docs, versioning]
+  priority: P3
+  status: done

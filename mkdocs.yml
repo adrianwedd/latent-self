@@ -1,6 +1,9 @@
 site_name: Latent Self
 theme:
   name: material
+plugins:
+  - search
+  - mike
 nav:
   - Home: index.md
   - Architecture: architecture.puml
@@ -12,9 +15,12 @@ nav:
   - Docs as Code: docs_as_code.md
   - Legacy Doc Inventory: legacy_doc_inventory.md
   - Setup Guide: setup_guide.md
+  - Versioned Docs: versioning.md
 
 docs_dir: docs
 extra:
+  version:
+    provider: mike
   analytics:
     provider: plausible
     domain: example.com
