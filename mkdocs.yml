@@ -35,3 +35,5 @@ extra:
 extra_javascript:
   - https://plausible.io/js/script.js
   - js/plausible.js
+  - js/giscus.js
+edit_uri: https://github.com/adrianwedd/latent-self/edit/main/docs/
