@@ -26,6 +26,7 @@ jobs:
       - run: pip install mkdocs mkdocs-material
       - run: python scripts/decode_images.py
       - run: mkdocs build --strict --site-dir site
+      - run: mkdocs build --strict --config-file demo_portal/mkdocs.yml --site-dir site/demo_portal
       - uses: lycheeverse/lychee-action@v1
         with:
           args: '--no-progress README.md CONTRIBUTING.md CHANGELOG.md docs/**/*.md'
