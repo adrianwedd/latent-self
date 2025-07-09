@@ -20,3 +20,5 @@ This document outlines three approaches considered for centralising the project'
 ### Recommendation
 
 For the current scope, **MkDocs Material** strikes the best balance of simplicity and features. A proof‑of‑concept exists under `deploy/docs_portal`.
+The portal uses the `mkdocs-monorepo-plugin` so documentation from
+multiple repositories can be indexed in one searchable site.

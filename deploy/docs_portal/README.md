@@ -8,11 +8,14 @@ Backstage was evaluated as a potential solution but was deemed too heavyweight f
 
 ## Usage
 
-Install the requirements and launch the site:
+Install the requirements and launch the site. The portal uses the
+`mkdocs-monorepo-plugin` to merge documentation from several
+repositories into a single searchable site:
 
 ```bash
-pip install mkdocs mkdocs-material
+pip install mkdocs mkdocs-material mkdocs-monorepo-plugin
 mkdocs serve -f mkdocs.yml
 ```
-
-The portal indexes all Markdown files under the repository `docs/` directory, providing full-text search across the documentation.
+The portal indexes Markdown files from this repository as well as
+`demo_portal/docs`, showcasing how multiple codebases can be combined
+into one portal with full-text search.
