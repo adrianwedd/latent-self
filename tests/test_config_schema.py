@@ -3,6 +3,8 @@ import yaml
 import pytest
 from pydantic import ValidationError
 from config_schema import AppConfig, DirectionsConfig
+import json
+import jsonschema
 
 
 def test_app_config_valid():
@@ -11,6 +13,15 @@ def test_app_config_valid():
     config = AppConfig(**data)
     assert config.cycle_duration > 0
     assert 'age' in config.blend_weights.model_dump()
+    assert len(config.eye_tracker.left_eye) == 2
+    assert len(config.eye_tracker.right_eye) == 2
+
+def test_json_schema_validation():
+    with open('data/config_schema.json') as sf:
+        schema = json.load(sf)
+    with open('data/config.yaml') as cf:
+        data = yaml.safe_load(cf)
+    jsonschema.validate(data, schema)
 
 
 def test_app_config_invalid_cycle_duration():

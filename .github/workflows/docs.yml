@@ -1,12 +1,19 @@
 name: Docs
 
 on:
+  push:
+    branches: [main]
   pull_request:
     paths:
       - 'docs/**'
       - '**.md'
       - '.github/workflows/docs.yml'
   workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
   build:
@@ -16,8 +23,27 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: pip install mkdocs mkdocs-material
-      - run: mkdocs build --strict
-      - uses: lycheeverse/lychee-action@v1
+      - run: pip install mkdocs mkdocs-material mkdocs-static-i18n sphinx
+      - run: python scripts/decode_images.py
+      - run: sphinx-build -b html docs/api_reference docs/api_reference/_build
+      - run: mkdocs build --strict --site-dir site
+      - run: mkdocs build --strict --config-file demo_portal/mkdocs.yml --site-dir site/demo_portal
+      - run: mkdocs build --strict --config-file deploy/docs/mkdocs.yml --site-dir site/portal
+      - uses: lycheeverse/lychee-action@v2.0.2
         with:
           args: '--no-progress README.md CONTRIBUTING.md CHANGELOG.md docs/**/*.md'
+      - uses: actions/upload-pages-artifact@v1
+        with:
+          path: site
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy-pages.outputs.page_url }}
+    steps:
+      - id: deploy-pages
+        uses: actions/deploy-pages@v1
+

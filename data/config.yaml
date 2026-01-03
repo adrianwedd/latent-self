@@ -10,16 +10,25 @@ blend_weights:
   gender: 0.3
   ethnicity: 0.5
   species: 0.2
+active_emotion: HAPPY
 
 # -- Performance --
 fps: 15  # Target frames per second
 tracker_alpha: 0.4  # Smoothing factor for eye tracking (0.0 - 1.0)
-max_cpu_mem_mb: 
-max_gpu_mem_gb: 
+device: auto  # auto|cpu|cuda
+gaze_mode: false
+eye_tracker:
+  left_eye: [80.0, 100.0]
+  right_eye: [176.0, 100.0]
+max_cpu_mem_mb:
+max_gpu_mem_gb:
 memory_check_interval: 10
+live_memory_stats: false
 
 # -- Admin Panel --
-admin_password_hash: "pbkdf2:sha256:260000$cTqL9kE3jJtNlY8a$c5badd8a9b3a2b3a2b3a2b3a2b3a2b3a2b3a2b3a2b3a2b3a2b3a2b3a2b3a"  # Default: "admin"
+# Generate a hash using `python scripts/generate_password_hash.py`
+admin_password_hash: ""
+admin_api_token: ""
 
 # -- MQTT (optional) --
 mqtt:
@@ -29,3 +38,17 @@ mqtt:
   topic_namespace: "mirror"
   device_id: ""
   heartbeat_interval: 5
+  username:
+  password:
+  tls: false
+  ca_cert:
+  client_cert:
+  client_key:
+
+# -- OSC (optional) --
+osc:
+  enabled: false
+  port: 9000
+
+# -- Scheduling --
+schedule: []

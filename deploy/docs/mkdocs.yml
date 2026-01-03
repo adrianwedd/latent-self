@@ -1,0 +1,20 @@
+site_name: Latent Self Docs Portal
+theme:
+  name: material
+plugins:
+  - search
+  - monorepo:
+      docs_dirs:
+        - ../../docs
+        - ../../demo_portal/docs
+nav:
+  - Home: index.md
+  - Architecture: architecture.puml
+  - Deployment: deployment.md
+  - User Manual: user_manual.md
+  - Troubleshooting: troubleshooting.md
+  - Release Process: release.md
+  - Documentation Strategy: documentation_strategy.md
+
+# Default docs directory (root repo)
+docs_dir: ../../docs

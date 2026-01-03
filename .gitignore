@@ -23,5 +23,7 @@ dist/
 .DS_Store
 
 # Models
-*.pt
-*.pkl
+*.pt*.pkl
+# Documentation builds
+site/
+docs/api_reference/_build/

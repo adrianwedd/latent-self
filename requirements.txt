@@ -1,11 +1,21 @@
-appdirs
-opencv-python
-mediapipe
+appdirs            # cross-platform user cache directories
+opencv-python      # OpenCV bindings for computer vision
+mediapipe          # face and eye tracking models
 numpy
 torch
 PyYAML
-PyQt6
-paho-mqtt
-Werkzeug
+PyQt6              # Qt GUI framework
+paho-mqtt          # MQTT heartbeat client
+Werkzeug           # password hashing utilities
 pydantic
-psutil
+pydantic-settings
+jsonschema         # config validation
+psutil             # system metrics for admin UI
+Flask              # lightweight web admin server
+onnxruntime        # optional ONNX inference
+sounddevice        # audio input for morphing
+APScheduler        # scheduled tasks
+python-osc         # Open Sound Control integration
+mike               # versioned documentation deployment
+Sphinx
+requests

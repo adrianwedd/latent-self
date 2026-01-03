@@ -12,6 +12,7 @@ This document provides detailed information about the Latent Self application, i
   - [Customizing the UI](#customizing-the-ui)
 - [Troubleshooting](#troubleshooting)
 
+- [User Manual](docs/user_manual.md)
 ## Project Overview
 
 Latent Self is an interactive art installation that uses real-time face morphing. It captures a user's face via webcam and applies transformations based on pre-trained StyleGAN and e4e models. The transformed image is displayed, creating a dynamic "altered reflection."
@@ -26,6 +27,7 @@ The application is primarily written in Python and leverages the following key l
 - **Mediapipe**: Used for robust face and eye tracking to ensure accurate alignment for morphing.
 - **PyInstaller**: For packaging the application into a standalone executable.
 - **paho-mqtt**: (Optional) For sending heartbeat signals to an MQTT broker for remote monitoring.
+- **pydantic-settings**: For typed configuration management and CLI overrides.
 
 ### Core Components
 
@@ -54,7 +56,10 @@ Key configuration parameters include:
 - `blend_weights`: Dictionary controlling the influence of different latent directions (age, gender, ethnicity, species) when in blended morphing mode.
 - `fps`: Target frames per second for the display.
 - `tracker_alpha`: Smoothing factor for the eye-tracking algorithm.
+- `eye_tracker.left_eye`/`right_eye`: Reference eye coordinates used for face alignment.
 - `admin_password_hash`: Hashed password for accessing the admin panel.
+- To generate a new hash run `python scripts/generate_password_hash.py` and
+  paste the output into `admin_password_hash` in your config file.
 - `mqtt`: MQTT broker settings for optional remote monitoring.
 
 ## Extending Functionality
@@ -86,4 +91,7 @@ To add a new morphing direction (e.g., "happiness"), follow these steps:
 - **Camera Not Detected**: Ensure your webcam is properly connected and not in use by another application. Check the `camera_index` in `latent_self.py` or `config.yaml`.
 - **Model Loading Errors**: Verify that all required model weights (`.pkl`, `.pt`, `.npz`) are present in the `models/` directory and are not corrupted.
 - **PyQt6 Issues**: If the Qt UI fails to launch, ensure PyQt6 is correctly installed (`pip install PyQt6`).
-- **Performance Issues**: Real-time performance is heavily dependent on GPU availability. Ensure CUDA is properly configured if you intend to use it (`--cuda` flag).
+- **Performance Issues**: Real-time performance is heavily dependent on GPU availability. Ensure CUDA is configured and run with `--device cuda`.
+
+For step-by-step setup see the [User Manual](docs/user_manual.md).
+See the [Troubleshooting Guide](docs/troubleshooting.md) for common issues.

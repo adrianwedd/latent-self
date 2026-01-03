@@ -9,19 +9,19 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-14]
+        os: [ubuntu-latest, macos-14, windows-latest]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - run: python -m pip install --upgrade pip
-      - run: pip install -r requirements.txt mypy pytest ruff mkdocs mkdocs-material pyinstaller
-      - run: ruff check .
-      - run: mypy --install-types --non-interactive .
+      - run: pip install -r requirements.lock -r requirements-test.txt mypy ruff black pre-commit mkdocs mkdocs-material mkdocs-static-i18n pyinstaller
+      - run: pre-commit run --all-files --show-diff-on-failure
       - run: pytest -q
+      - run: sphinx-build -b html docs/api_reference docs/api_reference/_build
       - run: mkdocs build --strict
-      - run: pyinstaller latent_self.spec
+      - run: python scripts/build_bundle.py
       - uses: actions/upload-artifact@v4
         with:
           name: latent-self-${{ matrix.os }}

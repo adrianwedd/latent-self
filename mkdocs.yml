@@ -1,9 +1,39 @@
 site_name: Latent Self
 theme:
   name: material
+plugins:
+  - search
+  - mike
+  - i18n:
+      languages:
+        - locale: en
+          name: English
+          default: true
+        - locale: es
+          name: Español
 nav:
   - Home: index.md
   - Architecture: architecture.puml
   - Deployment: deployment.md
+  - User Manual: user_manual.md
+  - Troubleshooting: troubleshooting.md
+  - Release Process: release.md
+  - Documentation Strategy: documentation_strategy.md
+  - Docs as Code: docs_as_code.md
+  - Docs-as-Code Workshop: workshop_docs_as_code.md
+  - Legacy Doc Inventory: legacy_doc_inventory.md
+  - Setup Guide: setup_guide.md
+  - Versioned Docs: versioning.md
 
 docs_dir: docs
+extra:
+  version:
+    provider: mike
+  analytics:
+    provider: plausible
+    domain: example.com
+extra_javascript:
+  - https://plausible.io/js/script.js
+  - js/plausible.js
+  - js/giscus.js
+edit_uri: https://github.com/adrianwedd/latent-self/edit/main/docs/

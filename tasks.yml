@@ -53,7 +53,7 @@ PHASE_D_POLISH:
     desc: Launch the app using prerecorded media or static images if no webcam is available — useful for headless or CI environments.
     tags: [debugging, robustness]
     priority: P3
-    status: optional
+    status: done
 
   - id: POLISH-009
     title: Validate all sliders in admin.py are working and write back to config
@@ -134,6 +134,13 @@ PHASE_F_DOCS_AGENTS:
     priority: P1
     status: done
 
+  - id: DOCS-007
+    title: Add user manual
+    desc: Create docs/user_manual.md with installation, configuration and common issues.
+    tags: [docs]
+    priority: P2
+    status: done
+
 PHASE_G_TESTS_AGENTS:
   - id: TEST-001
     title: Unit tests for latent_offset
@@ -176,6 +183,19 @@ PHASE_H_CI_CD_AGENTS:
     desc: Draft latent-self.service with auto‑restart and WatchdogSec; include install docs.
     tags: [deployment, systemd]
     priority: P1
+    status: done
+
+  - id: CI-003
+    title: Cross-platform PyInstaller builds
+    desc: Build Windows and macOS bundles in CI using a helper script.
+    tags: [ci, packaging]
+    priority: P2
+    status: done
+  - id: CI-004
+    title: pre-commit hooks
+    desc: Add `.pre-commit-config.yaml`, document installation, and run hooks in CI.
+    tags: [ci, lint]
+    priority: P2
     status: done
 
 PHASE_I_HOTFIXES:
@@ -247,14 +267,14 @@ PHASE_J_ENHANCEMENTS:
       • Provide hot-keys or Admin dropdown; HUD support.
     tags: [model, feature]
     priority: P1
-    status: todo
+    status: done
 
   - id: EMOTION-002
     title: UI controls for emotion bank
     desc: Implement either radio buttons or single-slider cycle in Qt admin panel; fallback keys in cv2 mode.
     tags: [ui, qt]
     priority: P2
-    status: todo
+    status: done
 
   # ────────────────────────────────────── Docs & Tests ───────────────────────────────────────────
   - id: DOCS-008
@@ -262,14 +282,26 @@ PHASE_J_ENHANCEMENTS:
     desc: Document new CLI hot-keys, update directions list, add screenshots.
     tags: [docs]
     priority: P2
-    status: todo
+    status: done
+  - id: DOCS-009
+    title: Add troubleshooting guide
+    desc: Document fixes for camera detection, missing weights and Qt installation.
+    tags: [docs, troubleshooting]
+    priority: P2
+    status: done
+  - id: DOCS-010
+    title: Service docs directory
+    desc: Add a dedicated `docs/` folder to the demo_portal service and update CI to publish it.
+    tags: [docs, ci]
+    priority: P3
+    status: done
 
   - id: TEST-005
     title: Unit tests for Beauty and Emotion vectors
     desc: Extend pytest fixture; assert vectors present, unit-L2, and orthogonality < 0.3 against existing axes.
     tags: [tests]
     priority: P1
-    status: todo
+    status: done
 PHASE_K_AUDIT:
   # ──────────────── Critical bug-fixes ──────────────────────────────────────────
   - id: AUDIT-001
@@ -339,11 +371,11 @@ PHASE_K_AUDIT:
   - id: AUDIT-008
     title: Adaptive frame-rate & frame-dropping
     desc: |
-      • Measure encode FPS; if below target, drop frames or lower resolution.  
+      • Measure encode FPS; if below target, drop frames or lower resolution.
       • Add --low_power preset.
     tags: [performance, video]
     priority: P2
-    status: todo
+    status: done
 
   # ──────────────── Code-quality & logging ─────────────────────────────────────
   - id: AUDIT-009
@@ -373,11 +405,11 @@ PHASE_K_AUDIT:
   - id: AUDIT-012
     title: Secure MQTT (TLS & auth)
     desc: |
-      • Add username/password or cert auth; support mqtts://;  
+      • Add username/password or cert auth; support mqtts://;
       • Securely store creds; validate incoming messages.
     tags: [security, network]
     priority: P2
-    status: todo
+    status: done
 
   # ──────────────── Tests, docs, CI ────────────────────────────────────────────
   - id: AUDIT-013
@@ -400,3 +432,354 @@ PHASE_K_AUDIT:
     tags: [docs]
     priority: P3
     status: done
+
+PHASE_L_REVIEW:
+  - id: REVIEW-001
+    title: Add pydantic-settings dependency
+    desc: Include pydantic-settings in requirements.txt and update docs.
+    tags: [dependency, config]
+    priority: P2
+    status: done
+
+  - id: REVIEW-002
+    title: Migrate Pydantic dict() calls
+    desc: Replace deprecated .dict() usages with .model_dump() in services.py.
+    tags: [refactor, pydantic]
+    priority: P3
+    status: done  # completed
+
+  - id: REVIEW-003
+    title: Fix truncated README usage section
+    desc: Complete the README instructions and remove stray lines.
+    tags: [docs]
+    priority: P3
+    status: done
+
+  - id: REVIEW-004
+    title: Document test environment setup
+    desc: Explain installing dependencies and running pytest in CONTRIBUTING.md.
+    tags: [docs, tests]
+    priority: P3
+    status: done
+
+  - id: REVIEW-005
+    title: Configurable eye canonical coordinates
+    desc: Load reference eye points from config and use them in VideoProcessor.
+    tags: [enhancement, config]
+    priority: P3
+    status: done
+
+  - id: REVIEW-006
+    title: Factor VideoProcessor stream loop
+    desc: Break _process_stream into helper methods for camera errors, frame processing and UI display.
+    tags: [refactor, video]
+    priority: P3
+    status: done
+
+  - id: REVIEW-007
+    title: Secure admin password hashing
+    desc: Use werkzeug's generate_password_hash, provide helper script and first-run prompt to set the admin password.
+    tags: [security, admin]
+    priority: P3
+    status: done
+
+PHASE_R_RELEASE:
+  - id: RELEASE-001
+    title: Automate GitHub release creation
+    desc: Provide a script using GitHub CLI to publish a tagged release and upload platform binaries.
+    tags: [ci, release]
+    priority: P2
+    status: done
+
+PHASE_S_MAINTENANCE:
+  - id: DEPLOY-002
+    title: Unify kiosk user in deployment script
+    desc: Use a `KIOSK_USER` alias in install_kiosk.sh and ensure the systemd service uses the same user.
+    tags: [deployment, systemd]
+    priority: P3
+    status: done
+
+PHASE_T_BACKLOG:
+  - id: 101
+    title: Replace Placeholder Documentation Images
+    desc: Capture high-quality screenshots and GIFs of the application running and replace the placeholders in README.md and docs/user_manual.md.
+    tags: [docs, polish]
+    priority: P2
+    status: done
+
+  - id: 102
+    title: Add a Lightweight Remote Admin Interface
+    desc: Implement a simple web server to expose admin settings over the local network.
+    tags: [admin, feature]
+    priority: P4
+    status: done
+
+
+  - id: 103
+    title: Add API Endpoint for Live Configuration Reload
+    desc: Provide a mechanism to trigger ConfigManager reloads without using the admin panel.
+    tags: [core, architecture]
+    priority: P3
+    status: done
+
+  - id: 104
+    title: Clarify or Remove comfyui-workflow.json
+    desc: Document the purpose of comfyui-workflow.json or delete it if unused.
+    tags: [docs, housekeeping]
+    priority: P5
+    status: done
+
+  - id: 105
+    title: Unify Kiosk User in Deployment Script
+    desc: Ensure install_kiosk.sh consistently uses a single kiosk user.
+    tags: [deployment]
+    priority: P4
+    status: done
+
+  - id: 106
+    title: Add Unit Tests for UI Components
+    desc: Write pytest-qt tests for admin panel and fullscreen window widgets.
+    tags: [tests, ui]
+    priority: P4
+    status: done
+
+  - id: 107
+    title: Implement Audio-Reactive Morphing
+    desc: Use microphone input to drive latent offset magnitude in real time.
+    tags: [core, feature]
+    priority: P3
+    status: done
+
+  - id: 201
+    title: Optimize Models with ONNX or TensorRT
+    desc: Convert StyleGAN2 and e4e to ONNX/TensorRT to speed up inference.
+    tags: [performance, core]
+    priority: P1
+    status: done
+
+  - id: 202
+    title: Implement Dynamic Latent Space Exploration
+    desc: Add a 2D control surface for exploring latent space with the mouse or other input.
+    tags: [ui, feature]
+    priority: P2
+    status: done
+
+  - id: 203
+    title: Add a Configuration Preset System
+    desc: Allow saving and loading named presets of all configuration settings.
+    tags: [admin, ux]
+    priority: P3
+    status: done
+
+  - id: 204
+    title: Implement a Daily Scheduler for Automated Changes
+    desc: Use APScheduler to swap models or presets at scheduled times.
+    tags: [core, scheduler]
+    priority: P4
+    status: done
+
+  - id: 205
+    title: Add OSC Integration
+    desc: Receive Open Sound Control messages to adjust morphing parameters.
+    tags: [integration, osc]
+    priority: P3
+    status: done
+
+  - id: 206
+    title: Develop a Graceful Model Loading Failure Mode
+    desc: Handle corrupt or missing model files without crashing the application.
+    tags: [robustness, core]
+    priority: P2
+    status: done
+
+  - id: 207
+    title: Add Live Preview to Admin Panel
+    desc: Show a low-framerate video preview inside the admin UI.
+    tags: [admin, ux]
+    priority: P4
+    status: done
+
+  - id: 208
+    title: Gaze-Driven Direction Switching
+    desc: Select active latent direction based on where the user looks.
+    tags: [ui, feature, gaze]
+    priority: P3
+    status: done
+
+  - id: 209
+    title: Live memory stats in admin panel
+    desc: Show CPU and GPU usage via progress bars when enabled.
+    tags: [ui, monitoring]
+    priority: P3
+    status: done
+
+  - id: 210
+    title: GPU availability helper and config flag
+    desc: Select torch device based on config and warn when CUDA unavailable.
+    tags: [core, gpu]
+    priority: P3
+    status: done
+
+  - id: 211
+    title: Frame metrics logging
+    desc: Log average FPS and processing latency every N seconds.
+    tags: [monitoring, performance]
+    priority: P3
+    status: done
+
+  - id: 212
+    title: Restore docs images from base64
+    desc: Add `scripts/decode_images.py` to regenerate PNG/GIF assets for MkDocs.
+    tags: [docs, tooling]
+    priority: P5
+    status: done
+  - id: 213
+    title: Architectural Refactoring
+    desc: Restructure the application to improve modularity and testability.
+    tags: [refactor, architecture, core]
+    priority: P5
+    status: done
+
+  - id: 214
+    title: Configuration and Schema Enhancement
+    desc: Formalize JSON schema, add preset system, secure admin API.
+    tags: [config, enhancement]
+    priority: P4
+    status: done
+
+  - id: 215
+    title: Enhance Testing Framework and Coverage
+    desc: Expand unit and integration tests; add UI tests with pytest-qt.
+    tags: [tests]
+    priority: P4
+    status: done
+
+  - id: 216
+    title: Documentation Overhaul
+    desc: Replace placeholder images, add architecture diagram, write user manual.
+    tags: [docs]
+    priority: P3
+    status: done
+
+  - id: 217
+    title: Add API token authentication for WebAdmin
+    desc: Require requests to include `X-Admin-Token` matching `admin_api_token` in config.
+    tags: [security, admin]
+    priority: P3
+    status: done
+
+- id: 1001
+  title: Finalize Documentation and Readability
+  desc: Perform a final pass on all documentation to ensure it is clear, concise, and ready for a public audience. This includes adding comments to complex code sections and ensuring all READMEs are up-to-date.
+  tags: [docs]
+  priority: P1
+  status: done
+
+PHASE_U_DOC_NETFLIX:
+  - id: DOC-001
+    title: Establish Documentation-as-a-Product Framework
+    desc: Treat documentation as a product with clear ownership, roadmap and metrics.
+    tags: [strategy, docs]
+    priority: P1
+    status: done
+  - id: DOC-002
+    title: Define Documentation Audience Personas
+    desc: Identify developer personas to tailor content effectively.
+    tags: [content, docs]
+    priority: P2
+    status: done
+  - id: DOC-003
+    title: Implement a Centralized Documentation Portal
+    desc: Deploy a single searchable portal as the source of truth.
+    tags: [platform, docs]
+    priority: P1
+    status: done
+  - id: DOC-004
+    title: Implement Docs-as-Code Workflow
+    desc: Integrate docs into version control and CI/CD.
+    tags: [workflow, docs]
+    priority: P2
+    status: done
+  - id: DOC-005
+    title: Automate API Documentation Generation
+    desc: Auto-generate API references from code annotations.
+    tags: [automation, docs]
+    priority: P3
+    status: done
+  - id: DOC-006
+    title: Create Content Style Guide and Templates
+    desc: Provide a style guide and templates emphasising the "why".
+    tags: [content, docs]
+    priority: P2
+    status: done
+  - id: DOC-007
+    title: Audit and Migrate Existing Documentation
+    desc: Migrate valuable legacy docs to the new portal.
+    tags: [migration, docs]
+    priority: P4
+    status: in_progress
+  - id: DOC-008
+    title: Integrate Feedback Mechanisms into Portal
+    desc: Add widgets for rating, editing and commenting on docs.
+    tags: [platform, docs]
+    priority: P3
+    status: done
+
+- id: DEPS-1
+  title: Modernize Dependencies and Verify Environment
+  desc: Update all project dependencies to the latest stable versions and regenerate the lock file.
+  tags: [build, deps]
+  priority: P2
+  status: done
+
+- id: 1002
+  title: Code Cleanup and Final Refactoring
+  desc: Perform a deep-dive code review to identify and address any remaining code smells, inconsistencies, or areas for minor refactoring.
+  tags: [core]
+  priority: P2
+  status: done
+
+- id: 1003
+  title: Placeholder and Unused File Removal
+  desc: Review the project for any placeholder images, unused scripts, or temporary files and remove them to clean up the repository.
+  tags: [general]
+  priority: P3
+  status: done
+
+- id: 1004
+  title: Final Verification of Kiosk and Deployment Scripts
+  desc: Thoroughly test the kiosk installation and deployment scripts on a clean environment to ensure they are robust and user-friendly.
+  tags: [deployment]
+  priority: P2
+  status: done
+- id: TBC
+  title: Finalize Dependencies and Stabilize CI Pipeline
+  desc: Lock dependencies with requirements.lock and ensure CI uses the lock file.
+  tags: [build, ci]
+  priority: P1
+  status: done
+- id: DOCS-011
+  title: Integrate privacy-friendly analytics
+  desc: Add Plausible analytics snippet to MkDocs and track search events
+  tags: [docs, analytics]
+  priority: P2
+  status: done
+
+- id: DOCS-012
+  title: Enable versioned documentation
+  desc: Add mike plugin to build and publish docs per tag with a version selector
+  tags: [docs, versioning]
+  priority: P3
+  status: done
+- id: DOCS-013
+  title: Add multi-language docs using mkdocs-static-i18n
+  desc: Configure i18n plugin, add Spanish translations and update CI to build locales.
+  tags: [docs, i18n]
+  priority: P3
+  status: done
+- id: DOCS-014
+  title: Deliver docs-as-code workshop
+  desc: Run a short workshop on using the style guide, templates and PR workflow. Record sessions for later viewing.
+  tags: [docs, training]
+  priority: P3
+  status: done
